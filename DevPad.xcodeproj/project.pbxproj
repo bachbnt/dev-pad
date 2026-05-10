@@ -1,0 +1,426 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		B0000001000000000000000A /* DevPadApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000001000000000000000B /* DevPadApp.swift */; };
+		B0000002000000000000000A /* MainWindowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000002000000000000000B /* MainWindowView.swift */; };
+		B0000003000000000000000A /* JSONFormatterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000003000000000000000B /* JSONFormatterView.swift */; };
+		B0000004000000000000000A /* XMLFormatterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000004000000000000000B /* XMLFormatterView.swift */; };
+		B0000005000000000000000A /* DiffCompareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000005000000000000000B /* DiffCompareView.swift */; };
+		B0000006000000000000000A /* ClipboardHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000006000000000000000B /* ClipboardHistoryView.swift */; };
+		B0000007000000000000000A /* ClipboardMenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000007000000000000000B /* ClipboardMenuBarView.swift */; };
+		B0000008000000000000000A /* JSONFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000008000000000000000B /* JSONFormatter.swift */; };
+		B0000009000000000000000A /* XMLFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000009000000000000000B /* XMLFormatter.swift */; };
+		B000000A000000000000000A /* DiffEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B000000A000000000000000B /* DiffEngine.swift */; };
+		B000000B000000000000000A /* ClipboardManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B000000B000000000000000B /* ClipboardManager.swift */; };
+		B000000C000000000000000A /* ClipboardItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = B000000C000000000000000B /* ClipboardItem.swift */; };
+		B000000D000000000000000A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B000000D000000000000000B /* Assets.xcassets */; };
+		B000000E000000000000000A /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B000000E000000000000000B /* Preview Assets.xcassets */; };
+		B0000023000000000000000A /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000023000000000000000B /* AppSettings.swift */; };
+		B0000024000000000000000A /* Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000024000000000000000B /* Localization.swift */; };
+		B0000025000000000000000A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000025000000000000000B /* SettingsView.swift */; };
+		B0000026000000000000000A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000026000000000000000B /* AppDelegate.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		B0000001000000000000000B /* DevPadApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevPadApp.swift; sourceTree = "<group>"; };
+		B0000002000000000000000B /* MainWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowView.swift; sourceTree = "<group>"; };
+		B0000003000000000000000B /* JSONFormatterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONFormatterView.swift; sourceTree = "<group>"; };
+		B0000004000000000000000B /* XMLFormatterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XMLFormatterView.swift; sourceTree = "<group>"; };
+		B0000005000000000000000B /* DiffCompareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffCompareView.swift; sourceTree = "<group>"; };
+		B0000006000000000000000B /* ClipboardHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardHistoryView.swift; sourceTree = "<group>"; };
+		B0000007000000000000000B /* ClipboardMenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardMenuBarView.swift; sourceTree = "<group>"; };
+		B0000008000000000000000B /* JSONFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONFormatter.swift; sourceTree = "<group>"; };
+		B0000009000000000000000B /* XMLFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XMLFormatter.swift; sourceTree = "<group>"; };
+		B000000A000000000000000B /* DiffEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffEngine.swift; sourceTree = "<group>"; };
+		B000000B000000000000000B /* ClipboardManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardManager.swift; sourceTree = "<group>"; };
+		B000000C000000000000000B /* ClipboardItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardItem.swift; sourceTree = "<group>"; };
+		B000000D000000000000000B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B000000E000000000000000B /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		B000000F000000000000000B /* DevPad.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DevPad.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B0000010000000000000000B /* DevPad.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DevPad.entitlements; sourceTree = "<group>"; };
+		B0000023000000000000000B /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
+		B0000024000000000000000B /* Localization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Localization.swift; sourceTree = "<group>"; };
+		B0000025000000000000000B /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		B0000026000000000000000B /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		B0000011000000000000000A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		B0000012000000000000000A = {
+			isa = PBXGroup;
+			children = (
+				B0000013000000000000000A /* DevPad */,
+				B0000014000000000000000A /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		B0000013000000000000000A /* DevPad */ = {
+			isa = PBXGroup;
+			children = (
+				B0000001000000000000000B /* DevPadApp.swift */,
+				B0000026000000000000000B /* AppDelegate.swift */,
+				B0000002000000000000000B /* MainWindowView.swift */,
+				B0000015000000000000000A /* Views */,
+				B0000016000000000000000A /* Utilities */,
+				B0000017000000000000000A /* Models */,
+				B000000D000000000000000B /* Assets.xcassets */,
+				B0000010000000000000000B /* DevPad.entitlements */,
+				B0000018000000000000000A /* Preview Content */,
+			);
+			path = DevPad;
+			sourceTree = "<group>";
+		};
+		B0000014000000000000000A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B000000F000000000000000B /* DevPad.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		B0000015000000000000000A /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				B0000003000000000000000B /* JSONFormatterView.swift */,
+				B0000004000000000000000B /* XMLFormatterView.swift */,
+				B0000005000000000000000B /* DiffCompareView.swift */,
+				B0000006000000000000000B /* ClipboardHistoryView.swift */,
+				B0000007000000000000000B /* ClipboardMenuBarView.swift */,
+				B0000025000000000000000B /* SettingsView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		B0000016000000000000000A /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				B0000008000000000000000B /* JSONFormatter.swift */,
+				B0000009000000000000000B /* XMLFormatter.swift */,
+				B000000A000000000000000B /* DiffEngine.swift */,
+				B000000B000000000000000B /* ClipboardManager.swift */,
+				B0000024000000000000000B /* Localization.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		B0000017000000000000000A /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				B000000C000000000000000B /* ClipboardItem.swift */,
+				B0000023000000000000000B /* AppSettings.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		B0000018000000000000000A /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				B000000E000000000000000B /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		B0000019000000000000000A /* DevPad */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B000001A000000000000000A /* Build configuration list for PBXNativeTarget "DevPad" */;
+			buildPhases = (
+				B000001B000000000000000A /* Sources */,
+				B0000011000000000000000A /* Frameworks */,
+				B000001C000000000000000A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = DevPad;
+			productName = DevPad;
+			productReference = B000000F000000000000000B /* DevPad.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		B000001D000000000000000A /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					B0000019000000000000000A = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = B000001E000000000000000A /* Build configuration list for PBXProject "DevPad" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = B0000012000000000000000A;
+			productRefGroup = B0000014000000000000000A /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				B0000019000000000000000A /* DevPad */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B000001C000000000000000A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B000000E000000000000000A /* Preview Assets.xcassets in Resources */,
+				B000000D000000000000000A /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		B000001B000000000000000A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B0000001000000000000000A /* DevPadApp.swift in Sources */,
+				B0000002000000000000000A /* MainWindowView.swift in Sources */,
+				B0000003000000000000000A /* JSONFormatterView.swift in Sources */,
+				B0000004000000000000000A /* XMLFormatterView.swift in Sources */,
+				B0000005000000000000000A /* DiffCompareView.swift in Sources */,
+				B0000006000000000000000A /* ClipboardHistoryView.swift in Sources */,
+				B0000007000000000000000A /* ClipboardMenuBarView.swift in Sources */,
+				B0000008000000000000000A /* JSONFormatter.swift in Sources */,
+				B0000009000000000000000A /* XMLFormatter.swift in Sources */,
+				B000000A000000000000000A /* DiffEngine.swift in Sources */,
+				B000000B000000000000000A /* ClipboardManager.swift in Sources */,
+				B000000C000000000000000A /* ClipboardItem.swift in Sources */,
+				B0000023000000000000000A /* AppSettings.swift in Sources */,
+				B0000024000000000000000A /* Localization.swift in Sources */,
+				B0000025000000000000000A /* SettingsView.swift in Sources */,
+				B0000026000000000000000A /* AppDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		B000001F000000000000000A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		B0000020000000000000000A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		B0000021000000000000000A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = DevPad/DevPad.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"DevPad/Preview Content\"";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 bachbnt. All rights reserved.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.DevPad;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		B0000022000000000000000A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = DevPad/DevPad.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"DevPad/Preview Content\"";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 bachbnt. All rights reserved.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.DevPad;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		B000001E000000000000000A /* Build configuration list for PBXProject "DevPad" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B000001F000000000000000A /* Debug */,
+				B0000020000000000000000A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B000001A000000000000000A /* Build configuration list for PBXNativeTarget "DevPad" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B0000021000000000000000A /* Debug */,
+				B0000022000000000000000A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = B000001D000000000000000A /* Project object */;
+}
