@@ -95,13 +95,18 @@ struct ClipboardMenuBarView: View {
                 NSApp.activate(ignoringOtherApps: true)
                 openWindow(id: "main")
             } label: {
-                Label(settings.t("menubar.open"), systemImage: "macwindow")
+                Image(systemName: "macwindow")
+                    .font(.body)
             }
-
-            Spacer()
+            .buttonStyle(.borderless)
+            .foregroundStyle(.secondary)
+            .help(settings.t("menubar.open"))
 
             Button {
-                openSettings()
+                settings.pendingTool = "settings"
+                NSApp.setActivationPolicy(.regular)
+                NSApp.activate(ignoringOtherApps: true)
+                openWindow(id: "main")
             } label: {
                 Image(systemName: "gearshape")
                     .font(.body)
@@ -110,36 +115,24 @@ struct ClipboardMenuBarView: View {
             .foregroundStyle(.secondary)
             .help(settings.t("settings.title"))
 
+            Spacer()
+
             Button {
                 NSApp.terminate(nil)
             } label: {
                 // "Quit" + power icon: text disambiguates from system shutdown,
                 // which a bare power glyph would suggest.
-                Label(settings.t("menubar.quit"), systemImage: "power")
+                Image(systemName: "power")
+                    .font(.body)
             }
+            .buttonStyle(.borderless)
+            .foregroundStyle(.secondary)
+            .help(settings.t("menubar.quit"))
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
     }
 
-    /// Opens the SwiftUI Settings scene from outside a View context.
-    /// Selector name changed between macOS 13 (`showPreferencesWindow:`)
-    /// and macOS 14+ (`showSettingsWindow:`), so we try both.
-    private func openSettings() {
-        NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
-
-        let selectors = [
-            Selector(("showSettingsWindow:")),
-            Selector(("showPreferencesWindow:"))
-        ]
-        for sel in selectors {
-            if NSApp.responds(to: sel) {
-                NSApp.sendAction(sel, to: nil, from: nil)
-                return
-            }
-        }
-    }
 }
 
 private struct MenuBarRow: View {

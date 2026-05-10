@@ -1,85 +1,99 @@
 # DevPad
 
-App macOS native cho developer — format JSON/XML, so sánh diff, lưu lịch sử clipboard. Chạy ngầm ở menu bar, ẩn dock icon khi không dùng.
+A native macOS developer utility — format JSON/XML, compare diffs, and track clipboard history. Runs quietly in the menu bar and hides the dock icon when the main window is closed.
 
 ![License](https://img.shields.io/badge/license-Proprietary-blue.svg)
 ![macOS](https://img.shields.io/badge/macOS-13.0+-black.svg)
 ![Swift](https://img.shields.io/badge/Swift-5.0-orange.svg)
 
-## Tính năng
+## Screenshots
 
-- **JSON Formatter** — paste JSON → bấm Format → text trong ô input thành pretty-printed. Hỗ trợ Minify, indent 2/4 spaces hoặc Tab.
-- **XML Formatter** — pretty-print XML với indentation chuẩn.
-- **Diff Compare** — so sánh 2 đoạn text side-by-side, line-level + word-level inline highlight (đỏ/xanh) như diffchecker.com.
-- **Clipboard History** — tự lưu 20 item clipboard gần nhất (text + image), pin item quan trọng, persist sau khi quit, xóa từng item hoặc xóa tất cả.
-- **Menu bar app** — icon `📋` ở thanh menu macOS, click để xem clipboard history nhanh, click vào item để copy lại.
-- **Settings** — chọn theme (System / Light / Dark) và ngôn ngữ (English / Tiếng Việt). Đổi runtime, không cần khởi động lại.
-- **Localization** — full UI dịch sang tiếng Việt và tiếng Anh.
+| JSON Formatter | Diff Compare |
+|:-:|:-:|
+| ![JSON Formatter](docs/screenshots/json.png) | ![Diff Compare](docs/screenshots/diff.png) |
 
-## Yêu cầu
+| Clipboard History | Settings |
+|:-:|:-:|
+| ![Clipboard History](docs/screenshots/clipboard.png) | ![Settings](docs/screenshots/settings.png) |
 
-- macOS 13.0 (Ventura) trở lên
-- Xcode 15+ để build từ source
+> To capture: `Cmd+Shift+4` → Space → click the window. Save to `docs/screenshots/`.
 
-## Build & chạy
+## Features
 
-### Mở trong Xcode
+- **JSON Formatter** — paste JSON, hit Format, get pretty-printed output. Supports Minify and 2-space / 4-space / Tab indent.
+- **XML Formatter** — pretty-print XML with standard indentation.
+- **Diff Compare** — side-by-side text comparison with line-level and word-level inline highlighting (red/green), similar to diffchecker.com.
+- **Clipboard History** — automatically saves the last 20 clipboard entries (text + images). Pin important items, persist across restarts, delete individually or clear all.
+- **Menu bar app** — clipboard icon in the macOS menu bar. Click to browse recent items; click an item to copy it again.
+- **Settings** — choose theme (System / Light / Dark) and language (English / Tiếng Việt). Changes apply instantly without restarting.
+- **Localization** — full UI in English and Vietnamese.
+
+## Requirements
+
+- macOS 13.0 Ventura or later
+- Xcode 15+ to build from source
+
+## Build & Run
+
+### Open in Xcode
 
 ```bash
 open DevPad.xcodeproj
 ```
 
-Sau đó nhấn `⌘R` để build và chạy.
+Press `⌘R` to build and run.
 
-### Đóng gói DMG
+### Package as DMG
 
 ```bash
 ./build_dmg.sh
 ```
 
-Output: `build/DevPad.dmg`. Mount file DMG, kéo `DevPad.app` vào folder Applications là xong.
+Output: `build/DevPad.dmg`. Mount the DMG and drag `DevPad.app` to Applications.
 
-> ⚠️ DMG mặc định build với ad-hoc signing (không có Apple Developer ID). Lần đầu mở phải **right-click → Open** để bypass Gatekeeper.
+> ⚠️ The DMG is built with ad-hoc signing by default (no Apple Developer ID). On first launch you must **right-click → Open** to bypass Gatekeeper.
 >
-> Nếu có Developer ID, chạy `./build_dmg.sh --signed` để dùng signing identity của Xcode.
+> If you have a Developer ID, run `./build_dmg.sh --signed` to use your Xcode signing identity.
 
-## Cách dùng
+## Usage
 
 ### Menu bar
-Sau khi mở app lần đầu, icon clipboard hiện ở thanh menu macOS (góc phải trên cùng). Click để xem 20 item gần nhất:
 
-- Click vào 1 item → copy lại vào clipboard.
-- Hover 1 item → hiện nút **pin** và **delete**.
-- Header có badge đếm số item + nút clear all.
+After first launch, a clipboard icon appears in the macOS menu bar (top-right). Click it to view the 20 most recent entries:
 
-### Window
-Click **Open DevPad** ở footer menu bar popup để mở cửa sổ chính. Sidebar có 5 tab:
+- Click an item → copies it back to the clipboard.
+- Hover an item → reveals **pin** and **delete** buttons.
+- The header shows an item count badge and a clear-all button.
 
-| Tab | Mô tả |
-|-----|-------|
-| JSON Formatter | Paste JSON, bấm Format hoặc `⌘↵` |
-| XML Formatter | Paste XML, bấm Format hoặc `⌘↵` |
-| Diff Compare | 2 ô text side-by-side, bấm Compare hoặc `⌘↵` |
-| Clipboard History | View đầy đủ với detail pane bên phải |
-| Settings | Theme + Language |
+### Main window
 
-### Lifecycle (quan trọng)
+Click **Open DevPad** in the menu bar popover footer to open the main window. The sidebar has five tabs:
 
-- **Đóng cửa sổ (red X)** → dock icon ẩn, app vẫn chạy ngầm với menu bar icon.
-- **Mở lại** → click "Open DevPad" trong menu bar popup.
-- **Quit hoàn toàn** → nút Quit trong menu bar popup, hoặc `⌘Q` khi window đang focus.
+| Tab | Description |
+|-----|-------------|
+| JSON Formatter | Paste JSON, press Format or `⌘↵` |
+| XML Formatter | Paste XML, press Format or `⌘↵` |
+| Diff Compare | Two text panes side-by-side, press Compare or `⌘↵` |
+| Clipboard History | Full view with a detail pane on the right |
+| Settings | Theme, language, and about |
 
-Đây là pattern menu-bar app chuẩn (giống Maccy, Bartender). Khác với app thường ở chỗ đóng cửa sổ KHÔNG quit app.
+### App lifecycle
 
-### Phím tắt
+- **Close window (red X)** → dock icon hides, app keeps running in the menu bar.
+- **Reopen** → click "Open DevPad" in the menu bar popover.
+- **Quit** → Quit button in the menu bar popover, or `⌘Q` while the window is focused.
 
-| Phím | Action |
-|------|--------|
-| `⌘↵` | Run Format / Compare (trong view formatter/diff) |
-| `⌘,` | Mở Settings |
-| `⌘Q` | Quit app (chỉ khi window focus) |
+This follows the standard menu-bar app pattern (similar to Maccy, Bartender). Unlike regular apps, closing the window does **not** quit DevPad.
 
-## Cấu trúc dự án
+### Keyboard shortcuts
+
+| Key | Action |
+|-----|--------|
+| `⌘↵` | Run Format / Compare |
+| `⌘,` | Open Settings |
+| `⌘Q` | Quit (only when window is focused) |
+
+## Project structure
 
 ```
 DevPad/
@@ -94,35 +108,36 @@ DevPad/
 │   ├── Utilities/
 │   │   ├── JSONFormatter.swift      # Pretty printer + minifier
 │   │   ├── XMLFormatter.swift       # Tokenizer-based pretty printer
-│   │   ├── DiffEngine.swift         # LCS line + word/char diff
-│   │   ├── ClipboardManager.swift   # NSPasteboard polling, persist
-│   │   └── Localization.swift       # EN/VI string catalog
+│   │   ├── DiffEngine.swift         # LCS line + word diff
+│   │   ├── ClipboardManager.swift   # NSPasteboard polling + persistence
+│   │   └── Localization.swift       # EN/VI in-memory string catalog
 │   ├── Views/
 │   │   ├── JSONFormatterView.swift
 │   │   ├── XMLFormatterView.swift
 │   │   ├── DiffCompareView.swift
-│   │   ├── ClipboardHistoryView.swift   # Window detail view
+│   │   ├── ClipboardHistoryView.swift   # Full window detail view
 │   │   ├── ClipboardMenuBarView.swift   # Menu bar popover
 │   │   └── SettingsView.swift
 │   ├── Assets.xcassets/
 │   ├── DevPad.entitlements          # App sandbox entitlements
 │   └── Preview Content/
+├── docs/screenshots/                # README screenshots
 ├── build_dmg.sh                     # Release build + DMG packaging
 ├── LICENSE
 └── README.md
 ```
 
-## Notes về implementation
+## Implementation notes
 
-- **Localization**: dictionary in-memory (`Localization.swift`) thay vì `Localizable.strings` để switch language runtime mà không cần restart. Mỗi view dùng `@EnvironmentObject AppSettings` và gọi `settings.t("key")` — khi `language` đổi thì @Published trigger re-render.
-- **Clipboard polling**: `Timer` poll `NSPasteboard.general.changeCount` mỗi 0.6s. Trade-off giữa CPU và độ trễ.
-- **Persistence**: clipboard history serialize qua `Codable` → `UserDefaults`. Image lưu dạng PNG bytes.
-- **Diff algorithm**: LCS classic (`O(m·n)`) cho line-level. Sau đó cho mỗi modified line, chạy LCS thứ 2 ở token-level (chữ/số liền kề là 1 token, mỗi punctuation là 1 token riêng) để inline highlight đúng phần thay đổi.
-- **Menu bar app pattern**: `applicationShouldTerminateAfterLastWindowClosed = false` + dynamic activation policy (`.regular` ↔ `.accessory`) để đóng window không quit app.
-- **No Localizable.xcstrings**: lý do trên (runtime switch). Trade-off: không thể export sang phiên dịch viên qua Xcode String Catalog. Nếu sau này cần i18n nhiều ngôn ngữ thì migrate sang `.xcstrings` + Bundle override.
+- **Localization** — strings are stored in an in-memory dictionary (`Localization.swift`) rather than `Localizable.strings`, so the language can switch at runtime without a restart. Every view reads `settings.t("key")` via `@EnvironmentObject`; changing `language` triggers a `@Published` re-render.
+- **Clipboard polling** — a `Timer` checks `NSPasteboard.general.changeCount` every 0.6 s. This trades a small amount of CPU for low latency.
+- **Persistence** — clipboard history is serialized via `Codable` into `UserDefaults`. Images are stored as PNG bytes.
+- **Diff algorithm** — classic LCS (`O(m·n)`) for line-level diffing. For each modified line, a second LCS pass runs at token level (contiguous alphanumerics = one token, each punctuation character = its own token) to produce accurate inline highlights.
+- **Menu bar pattern** — `applicationShouldTerminateAfterLastWindowClosed = false` combined with dynamic activation policy (`.regular` ↔ `.accessory`) keeps the app alive after the window closes.
+- **No `.xcstrings`** — intentional, for the runtime-switch reason above. Trade-off: strings cannot be exported to translators via Xcode String Catalog. If more languages are needed in the future, migrating to `.xcstrings` with a Bundle override is straightforward.
 
 ## License
 
 Copyright © 2026 bachbnt. All rights reserved.
 
-Xem file [LICENSE](LICENSE) để biết chi tiết.
+See the [LICENSE](LICENSE) file for details.

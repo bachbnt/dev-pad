@@ -70,6 +70,12 @@ struct MainWindowView: View {
                     .navigationTitle(settings.t("sidebar.settings"))
             }
         }
+        .onChange(of: settings.pendingTool) { pending in
+            if let raw = pending, let tool = Tool(rawValue: raw) {
+                selection = tool
+                settings.pendingTool = nil
+            }
+        }
     }
 }
 

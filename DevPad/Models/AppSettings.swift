@@ -87,6 +87,10 @@ final class AppSettings: ObservableObject {
         }
     }
 
+    /// Set to a Tool rawValue to request navigation in the main window.
+    /// MainWindowView consumes and clears this on change.
+    @Published var pendingTool: String? = nil
+
     private init() {
         let storedTheme = UserDefaults.standard.string(forKey: Self.themeKey) ?? ""
         self.theme = AppTheme(rawValue: storedTheme) ?? .system

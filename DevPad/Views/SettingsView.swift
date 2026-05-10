@@ -15,9 +15,13 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject private var settings: AppSettings
 
+    private var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+    }
+
     var body: some View {
         Form {
-            Section {
+            Section(settings.t("settings.section.appearance")) {
                 LabeledContent {
                     Picker(settings.t("settings.theme"), selection: $settings.theme) {
                         ForEach(AppTheme.allCases) { theme in
@@ -34,7 +38,9 @@ struct SettingsView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+            }
 
+            Section(settings.t("settings.section.language")) {
                 LabeledContent {
                     Picker(settings.t("settings.language"), selection: $settings.language) {
                         ForEach(AppLanguage.allCases) { lang in
@@ -52,10 +58,33 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+
+            Section(settings.t("settings.section.about")) {
+                LabeledContent(settings.t("settings.about.version")) {
+                    Text(appVersion)
+                        .foregroundStyle(.secondary)
+                }
+
+                LabeledContent(settings.t("settings.about.copyright")) {
+                    Text(settings.t("settings.about.copyright.value"))
+                        .foregroundStyle(.secondary)
+                }
+
+                LabeledContent {
+                    Text(settings.t("settings.about.license.value"))
+                        .foregroundStyle(.secondary)
+                } label: {
+                    Text(settings.t("settings.about.license"))
+                        .font(.body)
+                    Text(settings.t("settings.about.license.footer"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
         }
         .formStyle(.grouped)
         .scrollContentBackground(.hidden)
-        .frame(minWidth: 480, minHeight: 240)
+        .frame(minWidth: 480, minHeight: 340)
     }
 }
 

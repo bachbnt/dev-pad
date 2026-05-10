@@ -119,6 +119,15 @@ enum Localization {
         "settings.language.vietnamese":      "Tiếng Việt",
         "settings.language.footer":          "The change applies immediately, no restart required.",
 
+        // Settings — About / License
+        "settings.section.about":            "About",
+        "settings.about.version":            "Version",
+        "settings.about.copyright":          "Copyright",
+        "settings.about.copyright.value":    "© 2026 bachbnt. All rights reserved.",
+        "settings.about.license":            "License",
+        "settings.about.license.value":      "Proprietary",
+        "settings.about.license.footer":     "Unauthorized copying, modification or distribution of this software is strictly prohibited without prior written permission.",
+
         // Window
         "window.minSize":                    "DevPad"
     ]
@@ -202,6 +211,14 @@ enum Localization {
         "settings.language.english":         "English",
         "settings.language.vietnamese":      "Tiếng Việt",
         "settings.language.footer":          "Thay đổi áp dụng ngay, không cần khởi động lại.",
+
+        "settings.section.about":            "Thông tin",
+        "settings.about.version":            "Phiên bản",
+        "settings.about.copyright":          "Bản quyền",
+        "settings.about.copyright.value":    "© 2026 bachbnt. Bảo lưu mọi quyền.",
+        "settings.about.license":            "Giấy phép",
+        "settings.about.license.value":      "Proprietary",
+        "settings.about.license.footer":     "Nghiêm cấm sao chép, chỉnh sửa hoặc phân phối phần mềm này khi chưa có sự cho phép bằng văn bản.",
 
         "window.minSize":                    "DevPad"
     ]
