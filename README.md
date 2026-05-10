@@ -8,15 +8,17 @@ A native macOS developer utility — format JSON/XML, compare diffs, and track c
 
 ## Screenshots
 
-| JSON Formatter | Diff Compare |
+| JSON Formatter | XML Formatter |
 |:-:|:-:|
-| ![JSON Formatter](docs/screenshots/json.png) | ![Diff Compare](docs/screenshots/diff.png) |
+| ![JSON Formatter](docs/screenshots/json.png)  | ![XML Formatter](docs/screenshots/xml.png) |
 
-| Clipboard History | Settings |
+| Diff Compare | Clipboard History |
 |:-:|:-:|
-| ![Clipboard History](docs/screenshots/clipboard.png) | ![Settings](docs/screenshots/settings.png) |
+| ![Diff Compare](docs/screenshots/diff-compare.png) | ![Clipboard History](docs/screenshots/clipboard.png) |
 
-> To capture: `Cmd+Shift+4` → Space → click the window. Save to `docs/screenshots/`.
+| Settings | Menu Bar |
+|:-:|:-:|
+| ![Settings](docs/screenshots/settings.png) | ![Menu Bar](docs/screenshots/menubar.png) |
 
 ## Features
 
