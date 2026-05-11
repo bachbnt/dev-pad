@@ -68,7 +68,10 @@ struct DiffCompareView: View {
                 placeholder: settings.t("diff.placeholder.right")
             )
         }
-        .frame(minHeight: 220)
+        // Editors stay reasonably tall to remain comfortable to type in
+        // but never grow past `inputsMaxHeight` once a diff has run, so the
+        // diff output gets the lion's share of vertical space.
+        .frame(minHeight: 140, maxHeight: hasRun ? 200 : .infinity)
     }
 
     private func editorPane(title: String, text: Binding<String>, placeholder: String) -> some View {
@@ -249,7 +252,15 @@ struct DiffCompareView: View {
                     }
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            // .topLeading instead of .leading — without specifying vertical
+            // alignment the frame defaults to .center, which left the rows
+            // floating in the middle of the (now tall) diff frame instead
+            // of pinned to the top.
+            .frame(
+                maxWidth: .infinity,
+                maxHeight: .infinity,
+                alignment: .topLeading
+            )
         }
         .background(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
@@ -259,7 +270,9 @@ struct DiffCompareView: View {
                         .fill(Color(nsColor: .textBackgroundColor))
                 )
         )
-        .frame(minHeight: 200)
+        // Diff result is the focus once a comparison has been run, so let
+        // it take whatever vertical space the window has to spare.
+        .frame(minHeight: 200, maxHeight: .infinity)
     }
 
     // MARK: - Actions
@@ -478,7 +491,7 @@ private struct UnifiedDiffRowView: View {
                 .foregroundStyle(.secondary)
                 .frame(width: 14, alignment: .center)
 
-            unifiedText(side: side, text: text)
+            unifiedContent(side: side, text: text)
                 .font(.system(.body, design: .monospaced))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.vertical, 2)
@@ -491,48 +504,65 @@ private struct UnifiedDiffRowView: View {
 
     /// In unified mode, inline highlights still apply for modified rows —
     /// passing `side` lets us pull the correct half of the inline diff.
-    private func unifiedText(side: DiffSide?, text: String) -> Text {
-        // We just need to know both sides exist (so inlineDiff has both
-        // strings to compare); `renderedRow` reads them again via `row`.
-        guard let side, row.op == .modified,
-              row.leftText != nil, row.rightText != nil else {
-            return Text(text)
+    @ViewBuilder
+    private func unifiedContent(side: DiffSide?, text: String) -> some View {
+        if let side, row.op == .modified,
+           row.leftText != nil, row.rightText != nil {
+            renderedRow(row: row, side: side, text: text)
+        } else {
+            Text(text)
         }
-        return renderedRow(row: row, side: side, text: text)
     }
 }
 
 // MARK: - Shared inline-highlight renderer
 
-/// For modified rows, render text with inline word/char-level highlights
-/// using AttributedString so we can apply per-segment background color.
-/// For other ops, render plain text.
-private func renderedRow(row: DiffRow, side: DiffSide, text: String?) -> Text {
+/// Renders one diff row's text with character/word-level highlights for
+/// modified rows. Each diff segment becomes its own `Text` view inside an
+/// HStack so we can paint a deep red/green background per segment — the
+/// only reliable way to get that effect on macOS (AttributedString's
+/// backgroundColor isn't honoured by SwiftUI Text here).
+///
+/// Whitespace tokens with a non-equal kind get a `\u{00A0}` (no-break
+/// space) substitute so their background actually paints (a regular
+/// space's bounding box can collapse to zero width in some layouts).
+@ViewBuilder
+private func renderedRow(row: DiffRow, side: DiffSide, text: String?) -> some View {
     let plain = text ?? ""
-    guard row.op == .modified,
-          let l = row.leftText,
-          let r = row.rightText else {
-        return Text(plain)
-    }
-    let (leftSegs, rightSegs) = DiffEngine.inlineDiff(l, r)
-    let segs = side == .left ? leftSegs : rightSegs
-
-    var attr = AttributedString("")
-    for seg in segs {
-        var part = AttributedString(seg.text)
-        switch seg.kind {
-        case .equal:
-            break
-        case .removed:
-            part.backgroundColor = Color.red.opacity(0.45)
-            part.foregroundColor = .primary
-        case .added:
-            part.backgroundColor = Color.green.opacity(0.45)
-            part.foregroundColor = .primary
+    if row.op == .modified,
+       let l = row.leftText,
+       let r = row.rightText {
+        let (leftSegs, rightSegs) = DiffEngine.inlineDiff(l, r)
+        let segs = side == .left ? leftSegs : rightSegs
+        HStack(alignment: .firstTextBaseline, spacing: 0) {
+            ForEach(segs) { seg in
+                Text(displayText(for: seg))
+                    .foregroundStyle(.primary)
+                    .background(
+                        Rectangle().fill(inlineBackground(for: seg.kind))
+                    )
+            }
         }
-        attr.append(part)
+        .fixedSize(horizontal: true, vertical: false)
+    } else {
+        Text(plain)
     }
-    return Text(attr)
+}
+
+private func displayText(for seg: InlineSegment) -> String {
+    guard seg.kind != .equal else { return seg.text }
+    // Preserve whitespace visually so highlighted whitespace still shows.
+    return seg.text.replacingOccurrences(of: " ", with: "\u{00A0}")
+}
+
+private func inlineBackground(for kind: InlineSegment.Kind) -> Color {
+    switch kind {
+    case .equal:   return .clear
+    // Deeper saturation than the row tint so the changed characters
+    // visibly "pop" against the lighter row background.
+    case .removed: return Color.red.opacity(0.55)
+    case .added:   return Color.green.opacity(0.55)
+    }
 }
 
 #Preview {

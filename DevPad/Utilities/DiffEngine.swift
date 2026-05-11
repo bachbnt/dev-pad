@@ -102,8 +102,7 @@ struct DiffEngine {
         var k = 0
         while k < ops.count {
             let (op, li, ri) = ops[k]
-            switch op {
-            case .equal:
+            if case .equal = op {
                 let lIdx = li ?? 0
                 let rIdx = ri ?? 0
                 rows.append(DiffRow(
@@ -114,51 +113,54 @@ struct DiffEngine {
                     op: .equal
                 ))
                 k += 1
-            case .removed:
-                var removedIdxs: [Int] = []
-                while k < ops.count, case .removed = ops[k].0 {
+                continue
+            }
+
+            // Collect every consecutive non-equal op into a single change
+            // block, regardless of whether LCS emitted .added or .removed
+            // first. (Without this, a swap like "side" → "sid" comes out as
+            // one standalone .added + one standalone .removed instead of a
+            // single .modified pair — and inline highlighting only runs on
+            // .modified rows.)
+            var removedIdxs: [Int] = []
+            var addedIdxs: [Int] = []
+            collect: while k < ops.count {
+                switch ops[k].0 {
+                case .removed:
                     if let l = ops[k].1 { removedIdxs.append(l) }
                     k += 1
-                }
-                var addedIdxs: [Int] = []
-                while k < ops.count, case .added = ops[k].0 {
+                case .added:
                     if let r = ops[k].2 { addedIdxs.append(r) }
                     k += 1
+                case .equal, .modified:
+                    break collect
                 }
-                let pairCount = min(removedIdxs.count, addedIdxs.count)
-                for p in 0..<pairCount {
-                    let lIdx = removedIdxs[p]
-                    let rIdx = addedIdxs[p]
-                    rows.append(DiffRow(
-                        leftLineNumber: lIdx + 1,
-                        rightLineNumber: rIdx + 1,
-                        leftText: leftLines[lIdx],
-                        rightText: rightLines[rIdx],
-                        op: .modified
-                    ))
-                }
-                for p in pairCount..<removedIdxs.count {
-                    let lIdx = removedIdxs[p]
-                    rows.append(DiffRow(
-                        leftLineNumber: lIdx + 1,
-                        rightLineNumber: nil,
-                        leftText: leftLines[lIdx],
-                        rightText: nil,
-                        op: .removed
-                    ))
-                }
-                for p in pairCount..<addedIdxs.count {
-                    let rIdx = addedIdxs[p]
-                    rows.append(DiffRow(
-                        leftLineNumber: nil,
-                        rightLineNumber: rIdx + 1,
-                        leftText: nil,
-                        rightText: rightLines[rIdx],
-                        op: .added
-                    ))
-                }
-            case .added:
-                let rIdx = ri ?? 0
+            }
+
+            let pairCount = min(removedIdxs.count, addedIdxs.count)
+            for p in 0..<pairCount {
+                let lIdx = removedIdxs[p]
+                let rIdx = addedIdxs[p]
+                rows.append(DiffRow(
+                    leftLineNumber: lIdx + 1,
+                    rightLineNumber: rIdx + 1,
+                    leftText: leftLines[lIdx],
+                    rightText: rightLines[rIdx],
+                    op: .modified
+                ))
+            }
+            for p in pairCount..<removedIdxs.count {
+                let lIdx = removedIdxs[p]
+                rows.append(DiffRow(
+                    leftLineNumber: lIdx + 1,
+                    rightLineNumber: nil,
+                    leftText: leftLines[lIdx],
+                    rightText: nil,
+                    op: .removed
+                ))
+            }
+            for p in pairCount..<addedIdxs.count {
+                let rIdx = addedIdxs[p]
                 rows.append(DiffRow(
                     leftLineNumber: nil,
                     rightLineNumber: rIdx + 1,
@@ -166,9 +168,6 @@ struct DiffEngine {
                     rightText: rightLines[rIdx],
                     op: .added
                 ))
-                k += 1
-            case .modified:
-                k += 1
             }
         }
 
