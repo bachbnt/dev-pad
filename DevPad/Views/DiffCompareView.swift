@@ -233,7 +233,9 @@ struct DiffCompareView: View {
     }
 
     private var diffOutput: some View {
-        ScrollView([.vertical, .horizontal]) {
+        // Vertical-only scroll: long lines wrap via FlowLayout inside each
+        // row, so no horizontal scroll is needed.
+        ScrollView(.vertical) {
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(segments) { seg in
                     switch seg.kind {
@@ -336,7 +338,13 @@ private struct SplitDiffRowView: View {
     let row: DiffRow
 
     var body: some View {
-        HStack(spacing: 0) {
+        // `.alignment: .top` keeps line numbers and content of both cells
+        // pinned to the same top edge — otherwise, when one side wraps and
+        // the other doesn't, HStack's default centre alignment misaligns
+        // them. The `.frame(maxHeight: .infinity)` + `.fixedSize` pair
+        // makes each cell's background fill the row's full height so the
+        // shorter side doesn't show an awkward uncoloured gap.
+        HStack(alignment: .top, spacing: 0) {
             cell(
                 lineNumber: row.leftLineNumber,
                 text: row.leftText,
@@ -344,6 +352,7 @@ private struct SplitDiffRowView: View {
                 marker: leftMarker,
                 side: .left
             )
+            .frame(maxHeight: .infinity)
             Divider()
             cell(
                 lineNumber: row.rightLineNumber,
@@ -352,8 +361,10 @@ private struct SplitDiffRowView: View {
                 marker: rightMarker,
                 side: .right
             )
+            .frame(maxHeight: .infinity)
         }
         .frame(minHeight: 22)
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     private func cell(lineNumber: Int?,
@@ -373,12 +384,17 @@ private struct SplitDiffRowView: View {
                 .frame(width: 14, alignment: .center)
             renderedRow(row: row, side: side, text: text)
                 .font(.system(.body, design: .monospaced))
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: .topLeading)
                 .padding(.vertical, 2)
                 .padding(.trailing, 6)
                 .textSelection(.enabled)
         }
         .padding(.vertical, 1)
+        // Background applied AFTER `.frame(maxHeight: .infinity)` so that
+        // when the row gets stretched (because the sibling cell wrapped),
+        // the colour fills the entire row height instead of leaving an
+        // uncoloured gap below this cell's content.
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(background)
     }
 
@@ -518,10 +534,11 @@ private struct UnifiedDiffRowView: View {
 // MARK: - Shared inline-highlight renderer
 
 /// Renders one diff row's text with character/word-level highlights for
-/// modified rows. Each diff segment becomes its own `Text` view inside an
-/// HStack so we can paint a deep red/green background per segment — the
-/// only reliable way to get that effect on macOS (AttributedString's
-/// backgroundColor isn't honoured by SwiftUI Text here).
+/// modified rows. Each diff segment becomes its own `Text` view laid out
+/// by a custom `FlowLayout` so we can keep per-segment `.background()`
+/// (the only reliable way to get a deep red/green character highlight on
+/// macOS — AttributedString.backgroundColor isn't honoured) while still
+/// wrapping naturally when the row exceeds available width.
 ///
 /// Whitespace tokens with a non-equal kind get a `\u{00A0}` (no-break
 /// space) substitute so their background actually paints (a regular
@@ -534,7 +551,7 @@ private func renderedRow(row: DiffRow, side: DiffSide, text: String?) -> some Vi
        let r = row.rightText {
         let (leftSegs, rightSegs) = DiffEngine.inlineDiff(l, r)
         let segs = side == .left ? leftSegs : rightSegs
-        HStack(alignment: .firstTextBaseline, spacing: 0) {
+        FlowLayout {
             ForEach(segs) { seg in
                 Text(displayText(for: seg))
                     .foregroundStyle(.primary)
@@ -543,7 +560,6 @@ private func renderedRow(row: DiffRow, side: DiffSide, text: String?) -> some Vi
                     )
             }
         }
-        .fixedSize(horizontal: true, vertical: false)
     } else {
         Text(plain)
     }
@@ -562,6 +578,108 @@ private func inlineBackground(for kind: InlineSegment.Kind) -> Color {
     // visibly "pop" against the lighter row background.
     case .removed: return Color.red.opacity(0.55)
     case .added:   return Color.green.opacity(0.55)
+    }
+}
+
+// MARK: - FlowLayout
+
+/// Minimal left-to-right, top-to-bottom flow layout. Places its subviews
+/// next to each other and starts a new row when the proposed width would
+/// be exceeded. Used to wrap the per-segment Text views inside a diff
+/// row while preserving each segment's `.background()` for character-
+/// level highlighting.
+private struct FlowLayout: Layout {
+    var horizontalSpacing: CGFloat = 0
+    var verticalSpacing: CGFloat = 0
+
+    func sizeThatFits(proposal: ProposedViewSize,
+                      subviews: Subviews,
+                      cache: inout Void) -> CGSize {
+        let maxWidth = proposal.width ?? .infinity
+        let rows = computeRows(maxWidth: maxWidth, subviews: subviews)
+        let height = rows.reduce(0) { $0 + $1.height }
+            + (rows.isEmpty ? 0 : CGFloat(rows.count - 1) * verticalSpacing)
+        // Use the widest row, capped at the proposal — avoids the layout
+        // claiming infinity width when proposal.width is nil.
+        let width = rows.map(\.width).max() ?? 0
+        return CGSize(width: min(width, maxWidth), height: height)
+    }
+
+    func placeSubviews(in bounds: CGRect,
+                       proposal: ProposedViewSize,
+                       subviews: Subviews,
+                       cache: inout Void) {
+        let maxWidth = bounds.width
+        let rows = computeRows(maxWidth: maxWidth, subviews: subviews)
+        var y = bounds.minY
+        for row in rows {
+            var x = bounds.minX
+            for idxPos in row.indices.indices {
+                let index = row.indices[idxPos]
+                let subview = subviews[index]
+                let proposed = row.proposals[idxPos]
+                let size = subview.sizeThatFits(proposed)
+                subview.place(
+                    at: CGPoint(x: x, y: y),
+                    anchor: .topLeading,
+                    proposal: proposed
+                )
+                x += size.width + horizontalSpacing
+            }
+            y += row.height + verticalSpacing
+        }
+    }
+
+    private struct Row {
+        var indices: [Int] = []
+        var proposals: [ProposedViewSize] = []
+        var width: CGFloat = 0
+        var height: CGFloat = 0
+    }
+
+    private func computeRows(maxWidth: CGFloat, subviews: Subviews) -> [Row] {
+        var rows: [Row] = [Row()]
+        for (idx, subview) in subviews.enumerated() {
+            let natural = subview.sizeThatFits(.unspecified)
+
+            // If a single subview is wider than the row, propose the full
+            // row width so it can wrap internally (Text wraps when given
+            // a bounded width). Place it on its own row.
+            if natural.width > maxWidth {
+                if !rows[rows.count - 1].indices.isEmpty {
+                    rows.append(Row())
+                }
+                let proposal = ProposedViewSize(width: maxWidth, height: nil)
+                let wrappedSize = subview.sizeThatFits(proposal)
+                var newRow = Row()
+                newRow.indices = [idx]
+                newRow.proposals = [proposal]
+                newRow.width = wrappedSize.width
+                newRow.height = wrappedSize.height
+                rows[rows.count - 1] = newRow
+                rows.append(Row())
+                continue
+            }
+
+            var last = rows[rows.count - 1]
+            let leadingSpace = last.indices.isEmpty ? 0 : horizontalSpacing
+            if last.width + leadingSpace + natural.width > maxWidth, !last.indices.isEmpty {
+                rows.append(Row())
+                last = rows[rows.count - 1]
+            }
+            let spacing = last.indices.isEmpty ? 0 : horizontalSpacing
+            last.indices.append(idx)
+            last.proposals.append(ProposedViewSize(natural))
+            last.width += spacing + natural.width
+            last.height = max(last.height, natural.height)
+            rows[rows.count - 1] = last
+        }
+        // Strip a trailing empty row created when the last "single wide
+        // subview" branch was hit.
+        if let last = rows.last, last.indices.isEmpty, rows.count > 1 {
+            rows.removeLast()
+        }
+        return rows
     }
 }
 
