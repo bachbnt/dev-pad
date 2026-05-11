@@ -78,6 +78,14 @@ enum Localization {
         "diff.summary.added":                "%d added",
         "diff.summary.removed":              "%d removed",
         "diff.summary.modified":             "%d modified",
+        "diff.identical":                    "Both sides are identical.",
+        "diff.viewMode":                     "View",
+        "diff.viewMode.split":               "Split",
+        "diff.viewMode.unified":             "Unified",
+        "diff.context":                      "Context",
+        "diff.hunk.gap":                     "… %d unchanged line(s) hidden …",
+        "diff.options.whitespace":           "Ignore whitespace",
+        "diff.options.case":                 "Ignore case",
 
         // Clipboard
         "clipboard.itemCount":               "%d items",
@@ -98,6 +106,8 @@ enum Localization {
         "clipboard.image.unavailable":       "(Image not available)",
         "clipboard.preview.empty":           "(empty)",
         "clipboard.preview.image":           "🖼 Image — %d×%d, %d KB",
+        "clipboard.section.pinned":          "Pinned",
+        "clipboard.section.other":           "History",
 
         // Menu bar
         "menubar.open":                      "Open DevPad",
@@ -174,6 +184,14 @@ enum Localization {
         "diff.summary.added":                "Thêm %d",
         "diff.summary.removed":              "Xóa %d",
         "diff.summary.modified":             "Sửa %d",
+        "diff.identical":                    "Hai bên giống hệt nhau.",
+        "diff.viewMode":                     "Hiển thị",
+        "diff.viewMode.split":               "Tách 2 cột",
+        "diff.viewMode.unified":             "Ghép 1 cột",
+        "diff.context":                      "Ngữ cảnh",
+        "diff.hunk.gap":                     "… %d dòng không đổi đã ẩn …",
+        "diff.options.whitespace":           "Bỏ qua khoảng trắng",
+        "diff.options.case":                 "Bỏ qua hoa thường",
 
         "clipboard.itemCount":               "%d mục",
         "clipboard.itemCount.one":           "1 mục",
@@ -193,6 +211,8 @@ enum Localization {
         "clipboard.image.unavailable":       "(Hình ảnh không khả dụng)",
         "clipboard.preview.empty":           "(trống)",
         "clipboard.preview.image":           "🖼 Hình — %d×%d, %d KB",
+        "clipboard.section.pinned":          "Đã ghim",
+        "clipboard.section.other":           "Lịch sử",
 
         "menubar.open":                      "Mở DevPad",
         "menubar.empty":                     "Chưa có mục nào",

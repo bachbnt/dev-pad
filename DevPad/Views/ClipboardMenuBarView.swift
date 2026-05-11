@@ -58,6 +58,9 @@ struct ClipboardMenuBarView: View {
         .padding(.vertical, 10)
     }
 
+    private var pinnedItems: [ClipboardItem] { manager.items.filter { $0.pinned } }
+    private var unpinnedItems: [ClipboardItem] { manager.items.filter { !$0.pinned } }
+
     @ViewBuilder
     private var list: some View {
         if manager.items.isEmpty {
@@ -73,14 +76,51 @@ struct ClipboardMenuBarView: View {
         } else {
             ScrollView {
                 LazyVStack(spacing: 0) {
-                    ForEach(manager.items) { item in
-                        MenuBarRow(item: item)
-                        Divider()
-                            .padding(.leading, 50)
+                    if !pinnedItems.isEmpty {
+                        sectionLabel(
+                            text: settings.t("clipboard.section.pinned"),
+                            icon: "pin.fill",
+                            iconColor: .orange
+                        )
+                        ForEach(pinnedItems) { item in
+                            // Explicit `.id` with section prefix so an item
+                            // moving between sections gets a brand-new view
+                            // (instead of SwiftUI reusing the previous one
+                            // with stale `displayPinned`).
+                            MenuBarRow(item: item, displayPinned: true)
+                                .id("pinned-\(item.id.uuidString)")
+                            Divider().padding(.leading, 50)
+                        }
+                        sectionLabel(
+                            text: settings.t("clipboard.section.other"),
+                            icon: "clock",
+                            iconColor: .secondary
+                        )
+                    }
+                    ForEach(unpinnedItems) { item in
+                        MenuBarRow(item: item, displayPinned: false)
+                            .id("unpinned-\(item.id.uuidString)")
+                        Divider().padding(.leading, 50)
                     }
                 }
             }
         }
+    }
+
+    private func sectionLabel(text: String, icon: String, iconColor: Color) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.caption2)
+                .foregroundStyle(iconColor)
+            Text(text)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .textCase(.uppercase)
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.top, 10)
+        .padding(.bottom, 4)
     }
 
     private var footer: some View {
@@ -139,9 +179,17 @@ private struct MenuBarRow: View {
     @EnvironmentObject private var settings: AppSettings
     @ObservedObject private var manager = ClipboardManager.shared
     let item: ClipboardItem
+    /// Visual state for the pin icon — supplied by the parent based on
+    /// which section the row is rendered in. This bypasses a SwiftUI bug
+    /// where `item.pinned` reads stale inside nested buttons after toggle.
+    let displayPinned: Bool
     @State private var hovered = false
 
     var body: some View {
+        // Outer Button = the row's primary action (copy back to pasteboard).
+        // Nested pin/delete buttons must stay independently clickable, so
+        // we use .buttonStyle(.plain) outside and .borderless inside —
+        // SwiftUI then routes clicks on the inner buttons to those buttons.
         Button {
             manager.copyToPasteboard(item)
         } label: {
@@ -157,28 +205,29 @@ private struct MenuBarRow: View {
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                 }
-                if item.pinned {
-                    Image(systemName: "pin.fill")
-                        .foregroundStyle(.orange)
-                        .font(.caption)
-                }
-                if hovered {
-                    Button {
-                        manager.togglePin(item)
-                    } label: {
-                        Image(systemName: item.pinned ? "pin.slash" : "pin")
-                    }
-                    .buttonStyle(.borderless)
-                    .help(item.pinned ? settings.t("clipboard.unpin") : settings.t("clipboard.pin"))
 
-                    Button(role: .destructive) {
-                        manager.remove(item)
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                    }
-                    .buttonStyle(.borderless)
-                    .help(settings.t("clipboard.delete"))
+                // Single pin button — icon driven by the section the row is
+                // rendered in (`displayPinned`), not by `item.pinned`. This
+                // sidesteps the macOS SwiftUI bug where nested-button label
+                // foreground stays stale after a toggle. The click action
+                // still calls togglePin which mutates the real model.
+                Button {
+                    manager.togglePin(item)
+                } label: {
+                    Image(systemName: displayPinned ? "pin.fill" : "pin")
+                        .foregroundStyle(displayPinned ? Color.orange : Color.secondary)
                 }
+                .buttonStyle(.borderless)
+                .help(displayPinned ? settings.t("clipboard.unpin") : settings.t("clipboard.pin"))
+
+                Button(role: .destructive) {
+                    manager.remove(item)
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.borderless)
+                .help(settings.t("clipboard.delete"))
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)

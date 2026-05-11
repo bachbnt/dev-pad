@@ -80,41 +80,45 @@ struct ClipboardHistoryView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    // Use a plain HStack with explicit list-pane width so the long detail
-    // content can never push the outer NavigationSplitView's sidebar narrower
-    // than its own column-width hint. (HSplitView lets intrinsic content
-    // width bleed up the layout chain, which collapsed the sidebar labels.)
+    // Pinned items rendered as their own Section at the top, then a separate
+    // unlabelled Section for the rest. The grouped list style draws the
+    // section header + visual gap that acts as the divider.
     private var content: some View {
         HStack(spacing: 0) {
             List(selection: $selection) {
-                ForEach(manager.items) { item in
-                    HistoryRow(item: item)
-                        .tag(item.id)
-                        .contextMenu {
-                            Button {
-                                manager.copyToPasteboard(item)
-                            } label: {
-                                Label(settings.t("clipboard.copyAgain"), systemImage: "doc.on.doc")
-                            }
-                            Button {
-                                manager.togglePin(item)
-                            } label: {
-                                Label(
-                                    item.pinned
-                                        ? settings.t("clipboard.unpin")
-                                        : settings.t("clipboard.pin"),
-                                    systemImage: item.pinned ? "pin.slash" : "pin"
-                                )
-                            }
-                            Divider()
-                            Button(role: .destructive) {
-                                manager.remove(item)
-                            } label: {
-                                Label(settings.t("clipboard.deleteThis"), systemImage: "trash")
-                            }
+                if !pinnedItems.isEmpty {
+                    Section {
+                        ForEach(pinnedItems) { item in
+                            rowView(for: item)
                         }
+                    } header: {
+                        sectionHeader(
+                            text: settings.t("clipboard.section.pinned"),
+                            icon: "pin.fill",
+                            iconColor: .orange
+                        )
+                    }
+                }
+
+                Section {
+                    ForEach(unpinnedItems) { item in
+                        rowView(for: item)
+                    }
+                } header: {
+                    // Show "History" label only if there are pinned items above,
+                    // so the section divider is visually motivated.
+                    if !pinnedItems.isEmpty {
+                        sectionHeader(
+                            text: settings.t("clipboard.section.other"),
+                            icon: "clock",
+                            iconColor: .secondary
+                        )
+                    } else {
+                        EmptyView()
+                    }
                 }
             }
+            .listStyle(.inset)
             .frame(width: 340)
 
             Divider()
@@ -122,6 +126,50 @@ struct ClipboardHistoryView: View {
             detailPane
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+    }
+
+    private var pinnedItems: [ClipboardItem] { manager.items.filter { $0.pinned } }
+    private var unpinnedItems: [ClipboardItem] { manager.items.filter { !$0.pinned } }
+
+    private func sectionHeader(text: String, icon: String, iconColor: Color) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.caption)
+                .foregroundStyle(iconColor)
+            Text(text)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .textCase(.uppercase)
+            Spacer()
+        }
+    }
+
+    private func rowView(for item: ClipboardItem) -> some View {
+        HistoryRow(item: item)
+            .tag(item.id)
+            .contextMenu {
+                Button {
+                    manager.copyToPasteboard(item)
+                } label: {
+                    Label(settings.t("clipboard.copyAgain"), systemImage: "doc.on.doc")
+                }
+                Button {
+                    manager.togglePin(item)
+                } label: {
+                    Label(
+                        item.pinned
+                            ? settings.t("clipboard.unpin")
+                            : settings.t("clipboard.pin"),
+                        systemImage: item.pinned ? "pin.slash" : "pin"
+                    )
+                }
+                Divider()
+                Button(role: .destructive) {
+                    manager.remove(item)
+                } label: {
+                    Label(settings.t("clipboard.deleteThis"), systemImage: "trash")
+                }
+            }
     }
 
     private var detailPane: some View {
@@ -163,22 +211,26 @@ private struct HistoryRow: View {
                     .foregroundStyle(.tertiary)
             }
             Spacer(minLength: 8)
+            // .foregroundStyle is applied on the Button (not inside its label)
+            // so the color reliably updates when `item.pinned` flips. On macOS
+            // borderless buttons sometimes ignore the label's foreground change
+            // until the view re-mounts.
             Button {
                 manager.togglePin(item)
             } label: {
                 Image(systemName: item.pinned ? "pin.fill" : "pin")
-                    .foregroundStyle(item.pinned ? .orange : .secondary)
             }
             .buttonStyle(.borderless)
+            .foregroundStyle(item.pinned ? Color.orange : Color.secondary)
             .help(item.pinned ? settings.t("clipboard.unpin") : settings.t("clipboard.pin"))
 
             Button(role: .destructive) {
                 manager.remove(item)
             } label: {
                 Image(systemName: "xmark.circle.fill")
-                    .foregroundStyle(.secondary)
             }
             .buttonStyle(.borderless)
+            .foregroundStyle(.secondary)
             .help(settings.t("clipboard.delete"))
         }
         .padding(.vertical, 4)

@@ -2,10 +2,9 @@
 //  DiffEngine.swift
 //  DevPad
 //
-//  Computes a line-by-line diff between two strings using LCS, plus an
-//  in-line word-level diff (used to highlight just the changed substring
-//  inside a modified line — e.g. "đoạn văn A" vs "đoạn văn B" should
-//  highlight only "A" / "B", like diffchecker.com).
+//  Computes a line-by-line diff between two strings using LCS, plus
+//  inline word/char-level diff, and groups the line-level diff into
+//  git-style hunks (changes + context, gaps elided) for display.
 //
 
 import Foundation
@@ -33,23 +32,58 @@ struct InlineSegment: Identifiable {
     let kind: Kind
 }
 
+/// A git-style hunk: a contiguous block of rows including context, with
+/// a `@@ -leftStart,leftCount +rightStart,rightCount @@` header.
+struct DiffHunk: Identifiable {
+    let id = UUID()
+    let rows: [DiffRow]
+    let leftStart: Int
+    let leftCount: Int
+    let rightStart: Int
+    let rightCount: Int
+
+    var header: String {
+        "@@ -\(leftStart),\(leftCount) +\(rightStart),\(rightCount) @@"
+    }
+}
+
+/// Either a hunk to render or a "@@ N lines hidden @@" gap marker.
+struct DiffSegment: Identifiable {
+    enum Kind {
+        case hunk(DiffHunk)
+        case gap(unchangedLines: Int)
+    }
+    let id = UUID()
+    let kind: Kind
+}
+
 struct DiffEngine {
 
     // MARK: - Line-level diff
 
-    /// Compares two texts line-by-line and returns rows aligned for side-by-side display.
-    /// Adjacent removed/added rows are merged into a single `.modified` row when possible.
-    static func diff(left: String, right: String) -> [DiffRow] {
+    /// Compares two texts line-by-line and returns aligned rows.
+    /// Adjacent removed/added rows are merged into `.modified` row pairs.
+    ///
+    /// `ignoreWhitespace` and `ignoreCase` only affect the *comparison*;
+    /// the original text is preserved in each `DiffRow`.
+    static func diff(left: String,
+                     right: String,
+                     ignoreWhitespace: Bool = false,
+                     ignoreCase: Bool = false) -> [DiffRow] {
         let leftLines = left.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
         let rightLines = right.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
 
-        let lcs = lcsTable(leftLines, rightLines)
+        // Build "canonical" versions for comparison (without losing the original text).
+        let leftCanon = leftLines.map { canonicalize($0, ignoreWhitespace: ignoreWhitespace, ignoreCase: ignoreCase) }
+        let rightCanon = rightLines.map { canonicalize($0, ignoreWhitespace: ignoreWhitespace, ignoreCase: ignoreCase) }
+
+        let lcs = lcsTable(leftCanon, rightCanon)
 
         var ops: [(DiffOp, Int?, Int?)] = []
-        var i = leftLines.count
-        var j = rightLines.count
+        var i = leftCanon.count
+        var j = rightCanon.count
         while i > 0 && j > 0 {
-            if leftLines[i - 1] == rightLines[j - 1] {
+            if leftCanon[i - 1] == rightCanon[j - 1] {
                 ops.append((.equal, i - 1, j - 1))
                 i -= 1; j -= 1
             } else if lcs[i - 1][j] >= lcs[i][j - 1] {
@@ -141,18 +175,90 @@ struct DiffEngine {
         return rows
     }
 
+    // MARK: - Hunk grouping (git-style)
+
+    /// Groups rows into hunks separated by gap markers, mimicking
+    /// `git diff -U<context>`. Long runs of unchanged lines collapse into
+    /// "… N unchanged line(s) hidden …" rows; changes are surrounded by
+    /// up to `context` context lines on each side.
+    static func segment(rows: [DiffRow], context: Int = 3) -> [DiffSegment] {
+        guard !rows.isEmpty else { return [] }
+
+        // Locate indices of any non-equal row.
+        let changedIdxs = rows.enumerated()
+            .filter { $0.element.op != .equal }
+            .map { $0.offset }
+
+        guard !changedIdxs.isEmpty else { return [] }
+
+        // Build hunk ranges by expanding each change cluster with `context`
+        // lines on either side, then merging overlapping ranges.
+        var ranges: [(Int, Int)] = []
+        var curStart = max(0, changedIdxs[0] - context)
+        var curEnd = min(rows.count - 1, changedIdxs[0] + context)
+
+        for idx in changedIdxs.dropFirst() {
+            let propStart = max(0, idx - context)
+            let propEnd = min(rows.count - 1, idx + context)
+            if propStart <= curEnd + 1 {
+                curEnd = max(curEnd, propEnd)
+            } else {
+                ranges.append((curStart, curEnd))
+                curStart = propStart
+                curEnd = propEnd
+            }
+        }
+        ranges.append((curStart, curEnd))
+
+        // Emit segments — gap, hunk, gap, hunk, …
+        var segments: [DiffSegment] = []
+        var prevEnd = -1
+        for (s, e) in ranges {
+            let gap = s - (prevEnd + 1)
+            if gap > 0 {
+                segments.append(DiffSegment(kind: .gap(unchangedLines: gap)))
+            }
+            let slice = Array(rows[s...e])
+            segments.append(DiffSegment(kind: .hunk(makeHunk(rows: slice))))
+            prevEnd = e
+        }
+        let trailing = rows.count - 1 - prevEnd
+        if trailing > 0 {
+            segments.append(DiffSegment(kind: .gap(unchangedLines: trailing)))
+        }
+        return segments
+    }
+
+    private static func makeHunk(rows: [DiffRow]) -> DiffHunk {
+        var lMin = Int.max, lCount = 0
+        var rMin = Int.max, rCount = 0
+        for row in rows {
+            if let l = row.leftLineNumber {
+                lMin = min(lMin, l)
+                lCount += 1
+            }
+            if let r = row.rightLineNumber {
+                rMin = min(rMin, r)
+                rCount += 1
+            }
+        }
+        return DiffHunk(
+            rows: rows,
+            leftStart: lMin == .max ? 0 : lMin,
+            leftCount: lCount,
+            rightStart: rMin == .max ? 0 : rMin,
+            rightCount: rCount
+        )
+    }
+
     // MARK: - Inline (word/char) diff inside a modified row
 
     /// Returns segmented arrays for the left and right strings so that the UI
     /// can highlight only the parts that actually changed within a modified line.
-    /// Tokenization keeps runs of letters/digits as one token and emits each
-    /// punctuation/whitespace character as its own token, so a one-character
-    /// edit produces a single-character highlight (matching diffchecker.com).
     static func inlineDiff(_ left: String, _ right: String) -> (left: [InlineSegment], right: [InlineSegment]) {
         let l = tokenizeForInlineDiff(left)
         let r = tokenizeForInlineDiff(right)
 
-        // Fast-path: if either side is empty, the whole other side is the diff.
         if l.isEmpty || r.isEmpty {
             return (
                 left:  l.map { InlineSegment(text: $0, kind: .removed) },
@@ -180,8 +286,6 @@ struct DiffEngine {
         while j > 0 { ops.append((.added, nil, r[j - 1])); j -= 1 }
         ops.reverse()
 
-        // Coalesce consecutive same-kind tokens into a single segment so we
-        // emit fewer Text views and avoid mid-word splitting in the UI.
         var leftSegs: [InlineSegment] = []
         var rightSegs: [InlineSegment] = []
 
@@ -216,8 +320,6 @@ struct DiffEngine {
         return (leftSegs, rightSegs)
     }
 
-    /// Splits a string into tokens for inline diffing.
-    /// Letter/digit runs become one token, every other character is its own token.
     private static func tokenizeForInlineDiff(_ s: String) -> [String] {
         var tokens: [String] = []
         var current = ""
@@ -233,7 +335,33 @@ struct DiffEngine {
         return tokens
     }
 
-    // MARK: - LCS table (used by both line and inline diffs)
+    // MARK: - Canonicalization for ignoreWhitespace / ignoreCase
+
+    private static func canonicalize(_ s: String, ignoreWhitespace: Bool, ignoreCase: Bool) -> String {
+        var t = s
+        if ignoreWhitespace {
+            // Trim ends and collapse internal whitespace runs to a single space.
+            t = t.trimmingCharacters(in: .whitespaces)
+            var collapsed = ""
+            var lastWasSpace = false
+            for c in t {
+                if c.isWhitespace {
+                    if !lastWasSpace { collapsed.append(" ") }
+                    lastWasSpace = true
+                } else {
+                    collapsed.append(c)
+                    lastWasSpace = false
+                }
+            }
+            t = collapsed
+        }
+        if ignoreCase {
+            t = t.lowercased()
+        }
+        return t
+    }
+
+    // MARK: - LCS
 
     private static func lcsTable(_ a: [String], _ b: [String]) -> [[Int]] {
         let m = a.count
