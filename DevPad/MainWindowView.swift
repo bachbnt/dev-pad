@@ -14,6 +14,7 @@ private enum Tool: String, CaseIterable, Identifiable, Hashable {
     case xml
     case diff
     case clipboard
+    case dropshelf
     case settings
 
     var id: String { rawValue }
@@ -24,6 +25,7 @@ private enum Tool: String, CaseIterable, Identifiable, Hashable {
         case .xml:       return "sidebar.xml"
         case .diff:      return "sidebar.diff"
         case .clipboard: return "sidebar.clipboard"
+        case .dropshelf: return "sidebar.dropshelf"
         case .settings:  return "sidebar.settings"
         }
     }
@@ -34,6 +36,7 @@ private enum Tool: String, CaseIterable, Identifiable, Hashable {
         case .xml:       return "chevron.left.forwardslash.chevron.right"
         case .diff:      return "arrow.left.arrow.right"
         case .clipboard: return "doc.on.clipboard"
+        case .dropshelf: return "tray.and.arrow.down"
         case .settings:  return "gearshape"
         }
     }
@@ -65,6 +68,9 @@ struct MainWindowView: View {
             case .clipboard:
                 ClipboardHistoryView()
                     .navigationTitle(settings.t("sidebar.clipboard"))
+            case .dropshelf:
+                DropShelfView()
+                    .navigationTitle(settings.t("sidebar.dropshelf"))
             case .settings:
                 SettingsView()
                     .navigationTitle(settings.t("sidebar.settings"))

@@ -23,9 +23,25 @@ import SwiftUI
 final class DropShelfMonitor {
     static let shared = DropShelfMonitor()
 
+    /// Delay between detecting a file drag and showing the shelf. Stops
+    /// the panel from flashing on a quick accidental drag, and lets the
+    /// user move the cursor toward the destination first without the
+    /// shelf jumping in the way.
+    private let showDelay: TimeInterval = 1.0
+
     private var dragMonitor: Any?
     private var upMonitor: Any?
+    private var localUpMonitor: Any?
     private var panel: NSPanel?
+    private var pendingShowTask: Task<Void, Never>?
+
+    /// Last `NSPasteboard(.drag).changeCount` we treated as "seen".
+    /// A real drag-and-drop session increments this exactly once when it
+    /// starts; ordinary mouse drags over empty space don't touch it.
+    /// We only consider showing the panel when the count moves forward,
+    /// which lets us ignore stale drag-pasteboard contents from earlier
+    /// sessions.
+    private var lastDragChangeCount: Int = 0
 
     /// Whether the feature is currently enabled (driven by AppSettings).
     private(set) var isEnabled: Bool = false
@@ -50,6 +66,11 @@ final class DropShelfMonitor {
     // MARK: - Monitoring
 
     private func startMonitoring() {
+        // Baseline the drag-pasteboard counter so any session already in
+        // progress (or stale data from a previous drag) doesn't fire the
+        // popup immediately.
+        lastDragChangeCount = NSPasteboard(name: .drag).changeCount
+
         if dragMonitor == nil {
             dragMonitor = NSEvent.addGlobalMonitorForEvents(
                 matching: [.leftMouseDragged]
@@ -58,50 +79,96 @@ final class DropShelfMonitor {
             }
         }
         if upMonitor == nil {
+            // Global monitor sees mouseUp in OTHER apps (Finder, etc.).
             upMonitor = NSEvent.addGlobalMonitorForEvents(
                 matching: [.leftMouseUp]
             ) { [weak self] _ in
                 Task { @MainActor in self?.handleMouseUp() }
             }
         }
+        if localUpMonitor == nil {
+            // Local monitor catches mouseUp inside our own windows
+            // (e.g. when the drag ends in our shelf panel).
+            localUpMonitor = NSEvent.addLocalMonitorForEvents(
+                matching: [.leftMouseUp]
+            ) { [weak self] event in
+                Task { @MainActor in self?.handleMouseUp() }
+                return event
+            }
+        }
     }
 
     private func stopMonitoring() {
-        [dragMonitor, upMonitor].forEach { token in
+        [dragMonitor, upMonitor, localUpMonitor].forEach { token in
             if let token { NSEvent.removeMonitor(token) }
         }
         dragMonitor = nil
         upMonitor = nil
+        localUpMonitor = nil
+        pendingShowTask?.cancel()
+        pendingShowTask = nil
         panel?.close()
         panel = nil
     }
 
-    /// Called for every drag tick. If the drag pasteboard contains file
-    /// URLs and our panel isn't visible yet, pop it up next to the cursor.
+    /// Called for every drag tick. Only a real drag-and-drop session (one
+    /// that bumped the drag pasteboard's `changeCount`) AND that carries
+    /// file URLs arms the show timer. Plain rubber-band selections or
+    /// window-moving drags hit this method too — they don't change the
+    /// pasteboard, so they're ignored.
     private func handleDrag() {
         guard isEnabled else { return }
-        guard pasteboardHasFileURLs() else { return }
 
-        let panel = ensurePanel()
-        if !panel.isVisible {
-            positionPanelNearCursor(panel)
-            panel.orderFrontRegardless()
+        let pb = NSPasteboard(name: .drag)
+        let count = pb.changeCount
+        guard count != lastDragChangeCount else { return }
+        // Only treat this as a "new drag session" if it actually carries
+        // file URLs — non-file drags (text from a browser, colors, etc.)
+        // are ignored. Still record the count so we don't re-evaluate
+        // the same session over and over.
+        lastDragChangeCount = count
+        guard pasteboardContainsFileURLs(pb) else { return }
+
+        // Already shown — nothing to schedule.
+        if let panel, panel.isVisible { return }
+        // Already pending — first scheduler wins.
+        if pendingShowTask != nil { return }
+
+        pendingShowTask = Task { @MainActor [showDelay] in
+            try? await Task.sleep(nanoseconds: UInt64(showDelay * 500_000_000))
+            defer { self.pendingShowTask = nil }
+            guard !Task.isCancelled else { return }
+            guard self.isEnabled else { return }
+            // The drag may have ended during the delay; verify the same
+            // session is still active.
+            let nowPb = NSPasteboard(name: .drag)
+            guard nowPb.changeCount == self.lastDragChangeCount,
+                  self.pasteboardContainsFileURLs(nowPb) else { return }
+
+            let p = self.ensurePanel()
+            if !p.isVisible {
+                self.positionPanelNearCursor(p)
+                p.orderFrontRegardless()
+            }
         }
     }
 
     private func handleMouseUp() {
-        // We don't auto-close the panel on mouse up — the user might
-        // have dropped files into the shelf and want to keep collecting.
-        // Closing is controlled by the X button or settings toggle.
+        // If the user lets go before the show-delay expires, cancel the
+        // pending panel so we don't flash it after the drag has ended.
+        pendingShowTask?.cancel()
+        pendingShowTask = nil
+        // The panel itself stays visible if it's already up — the user
+        // closes it via the X button. (They might have dropped files into
+        // it and want to keep collecting.)
     }
 
-    private func pasteboardHasFileURLs() -> Bool {
-        let pb = NSPasteboard(name: .drag)
-        guard let types = pb.types,
-              types.contains(.fileURL) || types.contains(NSPasteboard.PasteboardType("public.file-url")) else {
-            return false
-        }
-        return true
+    private func pasteboardContainsFileURLs(_ pb: NSPasteboard) -> Bool {
+        guard let types = pb.types else { return false }
+        // Check both the modern UTType and the legacy NSPasteboardType
+        // identifiers — different sources advertise different ones.
+        return types.contains(.fileURL)
+            || types.contains(NSPasteboard.PasteboardType("public.file-url"))
     }
 
     // MARK: - Panel
@@ -132,6 +199,10 @@ final class DropShelfMonitor {
         panel.level = .floating
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.hidesOnDeactivate = false
+        // Let the user drag the panel by its header/background. The
+        // file-stack view explicitly opts OUT of this via
+        // `mouseDownCanMoveWindow = false` so it can start its own
+        // AppKit drag session for the files instead.
         panel.isMovableByWindowBackground = true
         panel.backgroundColor = .clear
         panel.isOpaque = false

@@ -34,6 +34,14 @@ struct DevPadApp: App {
                     // Sync the Drop Shelf monitor with the persisted setting.
                     DropShelfMonitor.shared.setEnabled(settings.dropShelfEnabled)
                 }
+                // Belt-and-suspenders: even if `AppSettings.dropShelfEnabled`'s
+                // didSet doesn't propagate the toggle (e.g. when the change
+                // arrives via a SwiftUI Binding inside a child view), this
+                // view-level observer guarantees the monitor always tracks
+                // the latest value.
+                .onChange(of: settings.dropShelfEnabled) { newValue in
+                    DropShelfMonitor.shared.setEnabled(newValue)
+                }
                 .onAppear {
                     // Whenever the main window comes back, restore dock presence.
                     NSApp.setActivationPolicy(.regular)
@@ -47,13 +55,17 @@ struct DevPadApp: App {
         .handlesExternalEvents(matching: ["main"])
 
         MenuBarExtra {
-            ClipboardMenuBarView()
+            MenuBarView()
                 .environmentObject(clipboard)
                 .environmentObject(settings)
                 .preferredColorScheme(settings.theme.colorScheme)
                 .environment(\.locale, settings.language.locale)
                 .task {
                     clipboard.start()
+                    DropShelfMonitor.shared.setEnabled(settings.dropShelfEnabled)
+                }
+                .onChange(of: settings.dropShelfEnabled) { newValue in
+                    DropShelfMonitor.shared.setEnabled(newValue)
                 }
         } label: {
             Image(systemName: "doc.on.clipboard")

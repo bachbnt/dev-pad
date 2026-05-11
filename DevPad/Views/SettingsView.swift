@@ -59,20 +59,6 @@ struct SettingsView: View {
                 }
             }
 
-            Section(settings.t("settings.section.dropshelf")) {
-                LabeledContent {
-                    Toggle("", isOn: $settings.dropShelfEnabled)
-                        .labelsHidden()
-                        .toggleStyle(.switch)
-                } label: {
-                    Text(settings.t("settings.dropshelf"))
-                        .font(.body)
-                    Text(settings.t("settings.dropshelf.footer"))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-
             Section(settings.t("settings.section.about")) {
                 LabeledContent(settings.t("settings.about.version")) {
                     Text(appVersion)

@@ -40,6 +40,7 @@ enum Localization {
         "sidebar.xml":                       "XML Formatter",
         "sidebar.diff":                      "Diff Compare",
         "sidebar.clipboard":                 "Clipboard History",
+        "sidebar.dropshelf":                 "Drop Shelf",
         "sidebar.settings":                  "Settings",
 
         // Common buttons / labels
@@ -114,7 +115,7 @@ enum Localization {
         "menubar.empty":                     "No items yet",
         "menubar.quit":                      "Quit DevPad",
 
-        // Drop Shelf
+        // Drop Shelf — popup
         "dropshelf.title":                   "Drop Shelf",
         "dropshelf.empty":                   "Drop files here",
         "dropshelf.hint":                    "Drag files in, then drag them out together to a new destination.",
@@ -122,6 +123,17 @@ enum Localization {
         "dropshelf.clear":                   "Clear shelf",
         "dropshelf.close":                   "Close",
         "dropshelf.dragOut":                 "Drag out all",
+        // Drop Shelf — main view / menubar section
+        "dropshelf.toggle":                  "Enable Drop Shelf",
+        "dropshelf.toggleHint":              "When on, a floating shelf appears whenever you start dragging files anywhere on the Mac.",
+        "dropshelf.disabled.title":          "Drop Shelf is off",
+        "dropshelf.disabled.hint":           "Turn it on to start collecting files while you drag.",
+        "dropshelf.list.empty":              "No files yet",
+        "dropshelf.list.empty.hint":         "Drag files into the floating shelf and they'll appear here.",
+        "dropshelf.remove":                  "Remove from shelf",
+        // Menu-bar tab labels
+        "menubar.tab.clipboard":             "Clipboard",
+        "menubar.tab.dropshelf":             "Drop Shelf",
 
         // Settings
         "settings.title":                    "Settings",
@@ -164,6 +176,7 @@ enum Localization {
         "sidebar.xml":                       "Định dạng XML",
         "sidebar.diff":                      "So sánh khác biệt",
         "sidebar.clipboard":                 "Lịch sử Clipboard",
+        "sidebar.dropshelf":                 "Khay thả file",
         "sidebar.settings":                  "Cài đặt",
 
         "common.paste":                      "Dán",
@@ -239,6 +252,15 @@ enum Localization {
         "dropshelf.clear":                   "Xóa khay",
         "dropshelf.close":                   "Đóng",
         "dropshelf.dragOut":                 "Kéo cả bộ ra",
+        "dropshelf.toggle":                  "Bật khay thả file",
+        "dropshelf.toggleHint":              "Khi bật, khay nổi sẽ tự hiện khi bạn bắt đầu kéo file ở bất kỳ đâu trên máy.",
+        "dropshelf.disabled.title":          "Khay thả đang tắt",
+        "dropshelf.disabled.hint":           "Bật lên để bắt đầu gom file khi đang kéo.",
+        "dropshelf.list.empty":              "Chưa có file nào",
+        "dropshelf.list.empty.hint":         "Kéo file vào khay nổi — chúng sẽ hiện ở đây.",
+        "dropshelf.remove":                  "Xóa khỏi khay",
+        "menubar.tab.clipboard":             "Clipboard",
+        "menubar.tab.dropshelf":             "Khay thả file",
 
         "settings.title":                    "Cài đặt",
         "settings.section.appearance":       "Giao diện",

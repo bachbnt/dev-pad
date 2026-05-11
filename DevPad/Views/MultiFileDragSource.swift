@@ -77,6 +77,12 @@ final class DragSourceHostView<Content: View>: NSView, NSDraggingSource {
         hosting.intrinsicContentSize
     }
 
+    /// IMPORTANT: prevents the parent panel (which has
+    /// `isMovableByWindowBackground = true`) from stealing our mouseDown
+    /// for window movement. Without this override, dragging the file
+    /// stack drags the panel itself instead of starting a file drag.
+    override var mouseDownCanMoveWindow: Bool { false }
+
     // MARK: - Mouse handling
 
     override func mouseDown(with event: NSEvent) {

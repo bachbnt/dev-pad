@@ -1,33 +1,144 @@
 //
-//  ClipboardMenuBarView.swift
+//  ClipboardMenuBarView.swift  →  MenuBarView
 //  DevPad
 //
-//  Compact view shown when the user clicks the menu bar icon.
-//  Lists recent clipboard items and lets them re-copy / pin / delete.
+//  Menu-bar popover hosted by `MenuBarExtra`. Lets the user switch
+//  between two tabs — Clipboard history and Drop Shelf — and exposes
+//  a shared footer (Open DevPad, Settings, Quit).
+//
+//  All three tabs (popup, main-window sidebar, this menubar tab)
+//  share the same underlying state via `DropShelfManager.shared` and
+//  `ClipboardManager.shared`, so changes propagate everywhere.
 //
 
 import SwiftUI
 import AppKit
 
-struct ClipboardMenuBarView: View {
+private enum MenuBarTab: String, CaseIterable, Identifiable {
+    case clipboard
+    case dropshelf
+
+    var id: String { rawValue }
+
+    var labelKey: String {
+        switch self {
+        case .clipboard: return "menubar.tab.clipboard"
+        case .dropshelf: return "menubar.tab.dropshelf"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .clipboard: return "doc.on.clipboard"
+        case .dropshelf: return "tray.and.arrow.down"
+        }
+    }
+}
+
+// MARK: - Root
+
+struct MenuBarView: View {
+    @EnvironmentObject private var settings: AppSettings
+    @ObservedObject private var clipboardManager = ClipboardManager.shared
+    @ObservedObject private var shelfManager = DropShelfManager.shared
+    @Environment(\.openWindow) private var openWindow
+
+    @State private var tab: MenuBarTab = .clipboard
+
+    var body: some View {
+        VStack(spacing: 0) {
+            tabPicker
+            Divider()
+            switch tab {
+            case .clipboard:
+                ClipboardSection()
+            case .dropshelf:
+                DropShelfSection()
+            }
+            Divider()
+            footer
+        }
+        .frame(width: 360, height: 520)
+    }
+
+    // MARK: - Tab picker
+
+    private var tabPicker: some View {
+        Picker("", selection: $tab) {
+            ForEach(MenuBarTab.allCases) { t in
+                Label(settings.t(t.labelKey), systemImage: t.icon).tag(t)
+            }
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+    }
+
+    // MARK: - Footer (shared)
+
+    private var footer: some View {
+        HStack(spacing: 8) {
+            Button {
+                NSApp.setActivationPolicy(.regular)
+                NSApp.activate(ignoringOtherApps: true)
+                openWindow(id: "main")
+            } label: {
+                Image(systemName: "macwindow")
+                    .font(.body)
+            }
+            .buttonStyle(.borderless)
+            .foregroundStyle(.secondary)
+            .help(settings.t("menubar.open"))
+
+            Button {
+                settings.pendingTool = "settings"
+                NSApp.setActivationPolicy(.regular)
+                NSApp.activate(ignoringOtherApps: true)
+                openWindow(id: "main")
+            } label: {
+                Image(systemName: "gearshape")
+                    .font(.body)
+            }
+            .buttonStyle(.borderless)
+            .foregroundStyle(.secondary)
+            .help(settings.t("settings.title"))
+
+            Spacer()
+
+            Button {
+                NSApp.terminate(nil)
+            } label: {
+                Image(systemName: "power")
+                    .font(.body)
+            }
+            .buttonStyle(.borderless)
+            .foregroundStyle(.secondary)
+            .help(settings.t("menubar.quit"))
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+    }
+}
+
+// MARK: - Clipboard tab content
+
+private struct ClipboardSection: View {
     @EnvironmentObject private var settings: AppSettings
     @ObservedObject private var manager = ClipboardManager.shared
-    @Environment(\.openWindow) private var openWindow
+
+    private var pinnedItems: [ClipboardItem] { manager.items.filter { $0.pinned } }
+    private var unpinnedItems: [ClipboardItem] { manager.items.filter { !$0.pinned } }
 
     var body: some View {
         VStack(spacing: 0) {
             header
             Divider()
             list
-            Divider()
-            footer
         }
-        .frame(width: 360, height: 480)
     }
 
     private var header: some View {
-        // Header carries content-level actions: title, count, and Clear.
-        // Clear belongs here (not the footer) because it acts on the list.
         HStack(spacing: 8) {
             Image(systemName: "doc.on.clipboard")
                 .foregroundStyle(.secondary)
@@ -58,9 +169,6 @@ struct ClipboardMenuBarView: View {
         .padding(.vertical, 10)
     }
 
-    private var pinnedItems: [ClipboardItem] { manager.items.filter { $0.pinned } }
-    private var unpinnedItems: [ClipboardItem] { manager.items.filter { !$0.pinned } }
-
     @ViewBuilder
     private var list: some View {
         if manager.items.isEmpty {
@@ -83,10 +191,6 @@ struct ClipboardMenuBarView: View {
                             iconColor: .orange
                         )
                         ForEach(pinnedItems) { item in
-                            // Explicit `.id` with section prefix so an item
-                            // moving between sections gets a brand-new view
-                            // (instead of SwiftUI reusing the previous one
-                            // with stale `displayPinned`).
                             MenuBarRow(item: item, displayPinned: true)
                                 .id("pinned-\(item.id.uuidString)")
                             Divider().padding(.leading, 50)
@@ -122,74 +226,154 @@ struct ClipboardMenuBarView: View {
         .padding(.top, 10)
         .padding(.bottom, 4)
     }
+}
 
-    private var footer: some View {
-        // Footer carries app-level actions: navigation (open window) and
-        // lifecycle (settings, quit). Both buttons are text-labelled with
-        // matching visual weight so the hierarchy reads cleanly.
+// MARK: - Drop Shelf tab content
+
+private struct DropShelfSection: View {
+    @EnvironmentObject private var settings: AppSettings
+    @ObservedObject private var manager = DropShelfManager.shared
+
+    var body: some View {
+        VStack(spacing: 0) {
+            header
+            Divider()
+            content
+        }
+    }
+
+    private var header: some View {
         HStack(spacing: 8) {
-            Button {
-                // Restore dock presence before opening the window so the
-                // app feels like a regular foreground app again.
-                NSApp.setActivationPolicy(.regular)
-                NSApp.activate(ignoringOtherApps: true)
-                openWindow(id: "main")
-            } label: {
-                Image(systemName: "macwindow")
-                    .font(.body)
+            Image(systemName: "tray.and.arrow.down")
+                .foregroundStyle(.secondary)
+            Text(settings.t("dropshelf.title"))
+                .font(.headline)
+            if settings.dropShelfEnabled, !manager.urls.isEmpty {
+                Text("\(manager.urls.count)")
+                    .foregroundStyle(.secondary)
+                    .font(.caption)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Capsule().fill(Color.secondary.opacity(0.15)))
             }
-            .buttonStyle(.borderless)
-            .foregroundStyle(.secondary)
-            .help(settings.t("menubar.open"))
-
-            Button {
-                settings.pendingTool = "settings"
-                NSApp.setActivationPolicy(.regular)
-                NSApp.activate(ignoringOtherApps: true)
-                openWindow(id: "main")
-            } label: {
-                Image(systemName: "gearshape")
-                    .font(.body)
-            }
-            .buttonStyle(.borderless)
-            .foregroundStyle(.secondary)
-            .help(settings.t("settings.title"))
-
             Spacer()
+            Toggle("", isOn: $settings.dropShelfEnabled)
+                .labelsHidden()
+                .toggleStyle(.switch)
+                .controlSize(.small)
+            if settings.dropShelfEnabled, !manager.urls.isEmpty {
+                Button(role: .destructive) {
+                    manager.clear()
+                } label: {
+                    Image(systemName: "trash")
+                        .font(.callout)
+                }
+                .buttonStyle(.borderless)
+                .foregroundStyle(.secondary)
+                .help(settings.t("common.clearAll"))
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+    }
 
-            Button {
-                NSApp.terminate(nil)
+    @ViewBuilder
+    private var content: some View {
+        if !settings.dropShelfEnabled {
+            VStack(spacing: 8) {
+                Image(systemName: "tray")
+                    .font(.system(size: 28))
+                    .foregroundStyle(.tertiary)
+                Text(settings.t("dropshelf.disabled.title"))
+                    .foregroundStyle(.secondary)
+                    .font(.callout)
+                Text(settings.t("dropshelf.disabled.hint"))
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if manager.urls.isEmpty {
+            VStack(spacing: 8) {
+                Image(systemName: "tray.and.arrow.down")
+                    .font(.system(size: 28))
+                    .foregroundStyle(.tertiary)
+                Text(settings.t("dropshelf.list.empty"))
+                    .foregroundStyle(.secondary)
+                    .font(.callout)
+                Text(settings.t("dropshelf.list.empty.hint"))
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    ForEach(manager.urls, id: \.self) { url in
+                        ShelfRow(url: url)
+                        Divider().padding(.leading, 50)
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct ShelfRow: View {
+    @EnvironmentObject private var settings: AppSettings
+    @ObservedObject private var manager = DropShelfManager.shared
+    let url: URL
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 10) {
+            MultiFileDragSource(urls: [url]) {
+                Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 28, height: 28)
+            }
+            .frame(width: 28, height: 28)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(url.lastPathComponent)
+                    .font(.callout)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text(url.deletingLastPathComponent().path)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(1)
+                    .truncationMode(.head)
+            }
+
+            Button(role: .destructive) {
+                manager.remove(url)
             } label: {
-                // "Quit" + power icon: text disambiguates from system shutdown,
-                // which a bare power glyph would suggest.
-                Image(systemName: "power")
-                    .font(.body)
+                Image(systemName: "xmark.circle.fill")
             }
             .buttonStyle(.borderless)
             .foregroundStyle(.secondary)
-            .help(settings.t("menubar.quit"))
+            .help(settings.t("dropshelf.remove"))
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
     }
-
 }
+
+// MARK: - Clipboard menu-bar row (unchanged)
 
 private struct MenuBarRow: View {
     @EnvironmentObject private var settings: AppSettings
     @ObservedObject private var manager = ClipboardManager.shared
     let item: ClipboardItem
-    /// Visual state for the pin icon — supplied by the parent based on
-    /// which section the row is rendered in. This bypasses a SwiftUI bug
-    /// where `item.pinned` reads stale inside nested buttons after toggle.
     let displayPinned: Bool
     @State private var hovered = false
 
     var body: some View {
-        // Outer Button = the row's primary action (copy back to pasteboard).
-        // Nested pin/delete buttons must stay independently clickable, so
-        // we use .buttonStyle(.plain) outside and .borderless inside —
-        // SwiftUI then routes clicks on the inner buttons to those buttons.
         Button {
             manager.copyToPasteboard(item)
         } label: {
@@ -206,11 +390,6 @@ private struct MenuBarRow: View {
                         .foregroundStyle(.tertiary)
                 }
 
-                // Single pin button — icon driven by the section the row is
-                // rendered in (`displayPinned`), not by `item.pinned`. This
-                // sidesteps the macOS SwiftUI bug where nested-button label
-                // foreground stays stale after a toggle. The click action
-                // still calls togglePin which mutates the real model.
                 Button {
                     manager.togglePin(item)
                 } label: {
@@ -293,7 +472,14 @@ private struct MenuBarRow: View {
     }
 }
 
+// MARK: - Back-compat shim
+//
+// `ClipboardMenuBarView` was the old public type used by DevPadApp's
+// `MenuBarExtra`. Kept as a thin wrapper so existing call sites keep
+// compiling; new code should use `MenuBarView` directly.
+typealias ClipboardMenuBarView = MenuBarView
+
 #Preview {
-    ClipboardMenuBarView()
+    MenuBarView()
         .environmentObject(AppSettings.shared)
 }

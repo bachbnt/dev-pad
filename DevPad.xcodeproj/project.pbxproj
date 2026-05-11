@@ -29,6 +29,7 @@
 		B0000031000000000000000A /* DropShelfMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000031000000000000000B /* DropShelfMonitor.swift */; };
 		B0000032000000000000000A /* DropShelfPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000032000000000000000B /* DropShelfPanelView.swift */; };
 		B0000033000000000000000A /* MultiFileDragSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000033000000000000000B /* MultiFileDragSource.swift */; };
+		B0000034000000000000000A /* DropShelfView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000034000000000000000B /* DropShelfView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -56,6 +57,7 @@
 		B0000031000000000000000B /* DropShelfMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropShelfMonitor.swift; sourceTree = "<group>"; };
 		B0000032000000000000000B /* DropShelfPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropShelfPanelView.swift; sourceTree = "<group>"; };
 		B0000033000000000000000B /* MultiFileDragSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiFileDragSource.swift; sourceTree = "<group>"; };
+		B0000034000000000000000B /* DropShelfView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropShelfView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -112,6 +114,7 @@
 				B0000025000000000000000B /* SettingsView.swift */,
 				B0000032000000000000000B /* DropShelfPanelView.swift */,
 				B0000033000000000000000B /* MultiFileDragSource.swift */,
+				B0000034000000000000000B /* DropShelfView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -237,6 +240,7 @@
 				B0000031000000000000000A /* DropShelfMonitor.swift in Sources */,
 				B0000032000000000000000A /* DropShelfPanelView.swift in Sources */,
 				B0000033000000000000000A /* MultiFileDragSource.swift in Sources */,
+				B0000034000000000000000A /* DropShelfView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
