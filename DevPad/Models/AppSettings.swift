@@ -74,6 +74,7 @@ final class AppSettings: ObservableObject {
 
     private static let themeKey = "DevPad.settings.theme"
     private static let languageKey = "DevPad.settings.language"
+    private static let dropShelfKey = "DevPad.settings.dropShelfEnabled"
 
     @Published var theme: AppTheme {
         didSet {
@@ -87,6 +88,15 @@ final class AppSettings: ObservableObject {
         }
     }
 
+    /// When true, a small floating shelf pops up whenever a file drag is
+    /// detected anywhere in the system (see `DropShelfMonitor`).
+    @Published var dropShelfEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(dropShelfEnabled, forKey: Self.dropShelfKey)
+            DropShelfMonitor.shared.setEnabled(dropShelfEnabled)
+        }
+    }
+
     /// Set to a Tool rawValue to request navigation in the main window.
     /// MainWindowView consumes and clears this on change.
     @Published var pendingTool: String? = nil
@@ -96,6 +106,9 @@ final class AppSettings: ObservableObject {
         self.theme = AppTheme(rawValue: storedTheme) ?? .system
         let storedLang = UserDefaults.standard.string(forKey: Self.languageKey) ?? ""
         self.language = AppLanguage(rawValue: storedLang) ?? .system
+        // UserDefaults.bool returns `false` when the key is absent — which
+        // is the default we want for the Drop Shelf (off until user opts in).
+        self.dropShelfEnabled = UserDefaults.standard.bool(forKey: Self.dropShelfKey)
     }
 
     // MARK: - Localization

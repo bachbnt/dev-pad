@@ -25,6 +25,10 @@
 		B0000024000000000000000A /* Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000024000000000000000B /* Localization.swift */; };
 		B0000025000000000000000A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000025000000000000000B /* SettingsView.swift */; };
 		B0000026000000000000000A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000026000000000000000B /* AppDelegate.swift */; };
+		B0000030000000000000000A /* DropShelfManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000030000000000000000B /* DropShelfManager.swift */; };
+		B0000031000000000000000A /* DropShelfMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000031000000000000000B /* DropShelfMonitor.swift */; };
+		B0000032000000000000000A /* DropShelfPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000032000000000000000B /* DropShelfPanelView.swift */; };
+		B0000033000000000000000A /* MultiFileDragSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000033000000000000000B /* MultiFileDragSource.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -48,6 +52,10 @@
 		B0000024000000000000000B /* Localization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Localization.swift; sourceTree = "<group>"; };
 		B0000025000000000000000B /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		B0000026000000000000000B /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		B0000030000000000000000B /* DropShelfManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropShelfManager.swift; sourceTree = "<group>"; };
+		B0000031000000000000000B /* DropShelfMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropShelfMonitor.swift; sourceTree = "<group>"; };
+		B0000032000000000000000B /* DropShelfPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropShelfPanelView.swift; sourceTree = "<group>"; };
+		B0000033000000000000000B /* MultiFileDragSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiFileDragSource.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -102,6 +110,8 @@
 				B0000006000000000000000B /* ClipboardHistoryView.swift */,
 				B0000007000000000000000B /* ClipboardMenuBarView.swift */,
 				B0000025000000000000000B /* SettingsView.swift */,
+				B0000032000000000000000B /* DropShelfPanelView.swift */,
+				B0000033000000000000000B /* MultiFileDragSource.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -114,6 +124,8 @@
 				B000000A000000000000000B /* DiffEngine.swift */,
 				B000000B000000000000000B /* ClipboardManager.swift */,
 				B0000024000000000000000B /* Localization.swift */,
+				B0000030000000000000000B /* DropShelfManager.swift */,
+				B0000031000000000000000B /* DropShelfMonitor.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -221,6 +233,10 @@
 				B0000024000000000000000A /* Localization.swift in Sources */,
 				B0000025000000000000000A /* SettingsView.swift in Sources */,
 				B0000026000000000000000A /* AppDelegate.swift in Sources */,
+				B0000030000000000000000A /* DropShelfManager.swift in Sources */,
+				B0000031000000000000000A /* DropShelfMonitor.swift in Sources */,
+				B0000032000000000000000A /* DropShelfPanelView.swift in Sources */,
+				B0000033000000000000000A /* MultiFileDragSource.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

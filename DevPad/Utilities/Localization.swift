@@ -114,6 +114,15 @@ enum Localization {
         "menubar.empty":                     "No items yet",
         "menubar.quit":                      "Quit DevPad",
 
+        // Drop Shelf
+        "dropshelf.title":                   "Drop Shelf",
+        "dropshelf.empty":                   "Drop files here",
+        "dropshelf.hint":                    "Drag files in, then drag them out together to a new destination.",
+        "dropshelf.count":                   "%d file(s)",
+        "dropshelf.clear":                   "Clear shelf",
+        "dropshelf.close":                   "Close",
+        "dropshelf.dragOut":                 "Drag out all",
+
         // Settings
         "settings.title":                    "Settings",
         "settings.section.appearance":       "Appearance",
@@ -128,6 +137,11 @@ enum Localization {
         "settings.language.english":         "English",
         "settings.language.vietnamese":      "Tiếng Việt",
         "settings.language.footer":          "The change applies immediately, no restart required.",
+
+        // Settings — Drop Shelf
+        "settings.section.dropshelf":        "Drop Shelf",
+        "settings.dropshelf":         "Enable",
+        "settings.dropshelf.footer":         "Show a floating shelf when you start dragging files. Drop files into it, then drag the bundle out to a new destination.",
 
         // Settings — About / License
         "settings.section.about":            "About",
@@ -218,6 +232,14 @@ enum Localization {
         "menubar.empty":                     "Chưa có mục nào",
         "menubar.quit":                      "Thoát DevPad",
 
+        "dropshelf.title":                   "Khay thả file",
+        "dropshelf.empty":                   "Thả file vào đây",
+        "dropshelf.hint":                    "Kéo file vào, rồi kéo cả bộ ra một thư mục mới.",
+        "dropshelf.count":                   "%d file",
+        "dropshelf.clear":                   "Xóa khay",
+        "dropshelf.close":                   "Đóng",
+        "dropshelf.dragOut":                 "Kéo cả bộ ra",
+
         "settings.title":                    "Cài đặt",
         "settings.section.appearance":       "Giao diện",
         "settings.theme":                    "Chế độ",
@@ -231,6 +253,10 @@ enum Localization {
         "settings.language.english":         "English",
         "settings.language.vietnamese":      "Tiếng Việt",
         "settings.language.footer":          "Thay đổi áp dụng ngay, không cần khởi động lại.",
+
+        "settings.section.dropshelf":        "Khay thả file",
+        "settings.dropshelf":                "Bật",
+        "settings.dropshelf.footer":         "Hiện khay nổi khi bạn bắt đầu kéo file. Thả file vào khay, sau đó kéo cả bộ ra thư mục mới.",
 
         "settings.section.about":            "Thông tin",
         "settings.about.version":            "Phiên bản",

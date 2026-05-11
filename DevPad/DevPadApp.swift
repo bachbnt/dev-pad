@@ -31,6 +31,8 @@ struct DevPadApp: App {
                 .environment(\.locale, settings.language.locale)
                 .task {
                     clipboard.start()
+                    // Sync the Drop Shelf monitor with the persisted setting.
+                    DropShelfMonitor.shared.setEnabled(settings.dropShelfEnabled)
                 }
                 .onAppear {
                     // Whenever the main window comes back, restore dock presence.
