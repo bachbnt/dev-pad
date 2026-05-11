@@ -153,6 +153,11 @@ private struct ClipboardSection: View {
                     .background(Capsule().fill(Color.secondary.opacity(0.15)))
             }
             Spacer()
+            Toggle("", isOn: $settings.purePasteEnabled)
+                .labelsHidden()
+                .toggleStyle(.switch)
+                .controlSize(.small)
+                .help(settings.t("clipboard.purePaste") + " — " + settings.t("clipboard.purePaste.tooltip"))
             if !manager.items.isEmpty {
                 Button(role: .destructive) {
                     manager.clearAll()

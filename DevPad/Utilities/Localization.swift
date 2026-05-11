@@ -38,6 +38,7 @@ enum Localization {
         "app.name":                          "DevPad",
         "sidebar.json":                      "JSON Formatter",
         "sidebar.xml":                       "XML Formatter",
+        "sidebar.sql":                       "SQL Formatter",
         "sidebar.diff":                      "Diff Compare",
         "sidebar.clipboard":                 "Clipboard History",
         "sidebar.dropshelf":                 "Drop Shelf",
@@ -69,6 +70,10 @@ enum Localization {
         "xml.error.empty":                   "Input is empty.",
         "xml.error.unclosed":                "Unclosed tag.",
         "xml.error.notokens":                "No tokens parsed.",
+
+        "sql.placeholder":                   "Paste your SQL here…",
+        "sql.error.prefix":                  "Invalid SQL",
+        "sql.error.empty":                   "Input is empty.",
 
         // Diff
         "diff.original":                     "Original",
@@ -109,6 +114,8 @@ enum Localization {
         "clipboard.preview.image":           "🖼 Image — %d×%d, %d KB",
         "clipboard.section.pinned":          "Pinned",
         "clipboard.section.other":           "History",
+        "clipboard.purePaste":               "Pure paste",
+        "clipboard.purePaste.tooltip":       "Auto-strip rich text formatting from copied text. Paste always lands as plain text.",
 
         // Menu bar
         "menubar.open":                      "Open DevPad",
@@ -173,6 +180,7 @@ enum Localization {
         "app.name":                          "DevPad",
         "sidebar.json":                      "Định dạng JSON",
         "sidebar.xml":                       "Định dạng XML",
+        "sidebar.sql":                       "Định dạng SQL",
         "sidebar.diff":                      "So sánh khác biệt",
         "sidebar.clipboard":                 "Lịch sử Clipboard",
         "sidebar.dropshelf":                 "Khay thả file",
@@ -201,6 +209,10 @@ enum Localization {
         "xml.error.empty":                   "Nội dung trống.",
         "xml.error.unclosed":                "Tag chưa đóng.",
         "xml.error.notokens":                "Không phân tích được token nào.",
+
+        "sql.placeholder":                   "Dán SQL vào đây…",
+        "sql.error.prefix":                  "SQL không hợp lệ",
+        "sql.error.empty":                   "Nội dung trống.",
 
         "diff.original":                     "Bản gốc",
         "diff.changed":                      "Bản sửa",
@@ -239,6 +251,8 @@ enum Localization {
         "clipboard.preview.image":           "🖼 Hình — %d×%d, %d KB",
         "clipboard.section.pinned":          "Đã ghim",
         "clipboard.section.other":           "Lịch sử",
+        "clipboard.purePaste":               "Bỏ định dạng",
+        "clipboard.purePaste.tooltip":       "Tự động bỏ định dạng (rich text) khỏi clipboard. Khi paste sẽ ra plain text.",
 
         "menubar.open":                      "Mở DevPad",
         "menubar.empty":                     "Chưa có mục nào",

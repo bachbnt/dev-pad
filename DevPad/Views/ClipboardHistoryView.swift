@@ -36,6 +36,10 @@ struct ClipboardHistoryView: View {
                 .foregroundStyle(.secondary)
                 .font(.callout)
             Spacer()
+            Toggle(settings.t("clipboard.purePaste"), isOn: $settings.purePasteEnabled)
+                .toggleStyle(.switch)
+                .controlSize(.small)
+                .help(settings.t("clipboard.purePaste.tooltip"))
             Button(role: .destructive) {
                 confirmClearAll = true
             } label: {

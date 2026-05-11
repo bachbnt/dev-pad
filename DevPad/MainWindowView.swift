@@ -12,6 +12,7 @@ import SwiftUI
 private enum Tool: String, CaseIterable, Identifiable, Hashable {
     case json
     case xml
+    case sql
     case diff
     case clipboard
     case dropshelf
@@ -23,6 +24,7 @@ private enum Tool: String, CaseIterable, Identifiable, Hashable {
         switch self {
         case .json:      return "sidebar.json"
         case .xml:       return "sidebar.xml"
+        case .sql:       return "sidebar.sql"
         case .diff:      return "sidebar.diff"
         case .clipboard: return "sidebar.clipboard"
         case .dropshelf: return "sidebar.dropshelf"
@@ -34,6 +36,7 @@ private enum Tool: String, CaseIterable, Identifiable, Hashable {
         switch self {
         case .json:      return "curlybraces"
         case .xml:       return "chevron.left.forwardslash.chevron.right"
+        case .sql:       return "tablecells"
         case .diff:      return "arrow.left.arrow.right"
         case .clipboard: return "doc.on.clipboard"
         case .dropshelf: return "tray.and.arrow.down"
@@ -62,6 +65,9 @@ struct MainWindowView: View {
             case .xml:
                 XMLFormatterView()
                     .navigationTitle(settings.t("sidebar.xml"))
+            case .sql:
+                SQLFormatterView()
+                    .navigationTitle(settings.t("sidebar.sql"))
             case .diff:
                 DiffCompareView()
                     .navigationTitle(settings.t("sidebar.diff"))

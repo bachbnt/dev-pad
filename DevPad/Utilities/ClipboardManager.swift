@@ -124,10 +124,41 @@ final class ClipboardManager: ObservableObject {
             return
         }
 
+        // PurePaste: when the toggle is on and the clipboard carries any
+        // rich-text representation (RTF/HTML/etc.) alongside the plain
+        // string, overwrite the pasteboard with just the plain text. Any
+        // app that pastes afterward gets unformatted text.
+        if AppSettings.shared.purePasteEnabled, hasRichTextContent() {
+            if let plain = pasteboard.string(forType: .string), !plain.isEmpty {
+                suppressNextChange = true
+                pasteboard.clearContents()
+                pasteboard.setString(plain, forType: .string)
+                lastChangeCount = pasteboard.changeCount
+                ingest(.init(kind: .text, text: plain))
+                return
+            }
+        }
+
         if let s = pasteboard.string(forType: .string),
            !s.isEmpty {
             ingest(.init(kind: .text, text: s))
         }
+    }
+
+    /// Returns true if the pasteboard advertises any rich-text type
+    /// in addition to (or instead of) plain text.
+    private func hasRichTextContent() -> Bool {
+        guard let types = pasteboard.types else { return false }
+        let richTypes: [NSPasteboard.PasteboardType] = [
+            .rtf,
+            .rtfd,
+            .html,
+            NSPasteboard.PasteboardType("public.html"),
+            NSPasteboard.PasteboardType("public.rtf"),
+            NSPasteboard.PasteboardType("com.apple.flat-rtfd"),
+            NSPasteboard.PasteboardType("WebArchivePboardType")
+        ]
+        return richTypes.contains { types.contains($0) }
     }
 
     private func ingest(_ candidate: ClipboardItem) {

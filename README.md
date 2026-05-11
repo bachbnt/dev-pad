@@ -6,6 +6,18 @@ A native macOS developer utility — format JSON/XML, compare diffs, track clipb
 ![macOS](https://img.shields.io/badge/macOS-13.0+-black.svg)
 ![Swift](https://img.shields.io/badge/Swift-5.0-orange.svg)
 
+## Download
+
+Grab the pre-built disk image straight from the repo: **[DevPad.dmg](DevPad.dmg)** (~3 MB).
+
+1. Double-click the downloaded `DevPad.dmg`.
+2. Drag `DevPad.app` into the `Applications` shortcut shown in the mounted volume.
+3. Launch it from Applications.
+
+> ⚠️ The build ships with ad-hoc signing (no Apple Developer ID), so the first launch hits Gatekeeper. **Right-click `DevPad.app` → Open**, then click **Open** in the confirmation dialog. macOS remembers the choice for subsequent launches.
+
+If you'd rather build from source, see [Build & Run](#build--run) below.
+
 ## Screenshots
 
 | JSON Formatter | XML Formatter |
@@ -24,8 +36,9 @@ A native macOS developer utility — format JSON/XML, compare diffs, track clipb
 
 - **JSON Formatter** — paste JSON, hit Format, get pretty-printed output. Supports Minify and 2-space / 4-space / Tab indent.
 - **XML Formatter** — pretty-print XML with standard indentation.
+- **SQL Formatter** — tokenizer-based pretty printer. Uppercases keywords, breaks each major clause (SELECT, FROM, WHERE, JOIN, GROUP BY, …) onto its own line, indents subqueries, and aligns AND / OR. Includes a Minify mode.
 - **Diff Compare** — side-by-side or unified text comparison with git-style hunks, configurable context, inline word/character-level highlighting (red/green), plus Ignore-whitespace and Ignore-case options.
-- **Clipboard History** — automatically saves the last 20 clipboard entries (text + images). Pinned items appear in a separate section, persist across restarts, delete individually or clear all.
+- **Clipboard History** — automatically saves the last 20 clipboard entries (text + images). Pinned items appear in a separate section, persist across restarts, delete individually or clear all. Includes **Pure Paste** — an on/off toggle that strips rich-text formatting from anything you copy, so subsequent paste lands as plain text everywhere.
 - **Drop Shelf** — Dropover-style floating shelf. Toggle it on and a small panel pops up whenever you start dragging files anywhere on the Mac; drop files into it, accumulate as many as you like, then drag the whole bundle out to a new destination. Multi-file drag is real AppKit `NSDraggingSource` — Finder receives every file at once.
 - **Menu bar app** — clipboard icon in the macOS menu bar. Click for a tabbed popover (Clipboard / Drop Shelf), drag files out from there too.
 - **Settings** — choose theme (System / Light / Dark) and language (English / Tiếng Việt). Changes apply instantly without restarting.
@@ -76,8 +89,9 @@ Click **Open DevPad** in the menu bar popover footer to open the main window. Th
 |-----|-------------|
 | JSON Formatter | Paste JSON, press Format or `⌘↵` |
 | XML Formatter | Paste XML, press Format or `⌘↵` |
+| SQL Formatter | Paste a query, press Format or `⌘↵`. Keywords uppercased, clauses on their own lines, subqueries indented. Minify available. |
 | Diff Compare | Two text panes side-by-side, press Compare or `⌘↵`. Switch between Split / Unified view, adjust context size, toggle Ignore whitespace / case. |
-| Clipboard History | Full view with a detail pane on the right; pinned items grouped on top |
+| Clipboard History | Full view with a detail pane on the right; pinned items grouped on top. The header has a **Pure paste** toggle that strips rich-text formatting from copied text. |
 | Drop Shelf | Toggle the feature on/off, see collected files, drag the whole bundle (or individual files) out to any destination |
 | Settings | Theme, language, and about |
 
@@ -120,16 +134,18 @@ DevPad/
 │   ├── Utilities/
 │   │   ├── JSONFormatter.swift      # Pretty printer + minifier
 │   │   ├── XMLFormatter.swift       # Tokenizer-based pretty printer
+│   │   ├── SQLFormatter.swift       # Tokenizer-based SQL pretty printer + minifier
 │   │   ├── DiffEngine.swift         # LCS line/word diff + hunk grouping
-│   │   ├── ClipboardManager.swift   # NSPasteboard polling + persistence
+│   │   ├── ClipboardManager.swift   # NSPasteboard polling + persistence + Pure Paste
 │   │   ├── DropShelfManager.swift   # Shared state for the Drop Shelf
 │   │   ├── DropShelfMonitor.swift   # Global drag detection + floating panel
 │   │   └── Localization.swift       # EN/VI in-memory string catalog
 │   ├── Views/
 │   │   ├── JSONFormatterView.swift
 │   │   ├── XMLFormatterView.swift
+│   │   ├── SQLFormatterView.swift
 │   │   ├── DiffCompareView.swift
-│   │   ├── ClipboardHistoryView.swift   # Full window detail view
+│   │   ├── ClipboardHistoryView.swift   # Full window detail view (Pure Paste toggle)
 │   │   ├── ClipboardMenuBarView.swift   # Tabbed menu-bar popover (Clipboard + Drop Shelf)
 │   │   ├── DropShelfView.swift          # Drop Shelf sidebar tab
 │   │   ├── DropShelfPanelView.swift     # Floating popup content
@@ -150,6 +166,8 @@ DevPad/
 - **Clipboard polling** — a `Timer` checks `NSPasteboard.general.changeCount` every 0.6 s. This trades a small amount of CPU for low latency.
 - **Persistence** — clipboard history is serialized via `Codable` into `UserDefaults`. Images are stored as PNG bytes.
 - **Diff algorithm** — classic LCS (`O(m·n)`) for line-level diffing. For each modified line, a second LCS pass runs at token level (contiguous alphanumerics = one token, each punctuation character = its own token) to produce accurate inline highlights. Hunks group changes with configurable context lines, collapsing long unchanged spans into "N lines hidden" markers — same behaviour as `git diff -U<n>`.
+- **SQL formatter** — pure-Swift tokenizer that recognises keywords (case-insensitive matching, uppercased on emit), identifiers, numbers, strings (`'...'` / `"..."` with escaped doubled quotes), line and block comments, operators, and punctuation. Emission rules: a newline before every clause-starter keyword (SELECT, FROM, WHERE, JOIN, …); commas in a SELECT/VALUES/SET list break to a new column-line; subqueries `(…)` push the indent level. The tokenizer-then-emit approach is simple to reason about and easy to extend with new keywords.
+- **Pure Paste** — when toggled on, `ClipboardManager` inspects the system pasteboard each tick. If the clipboard advertises any rich-text representation (`.rtf`, `.rtfd`, `.html`, `WebArchivePboardType`, …) alongside the plain string, the manager overwrites the pasteboard with just the plain text and records the plain version in history. A `suppressNextChange` flag prevents the rewrite from being re-processed as a brand-new clipboard event.
 - **Drop Shelf detection** — an `NSEvent` global monitor watches `.leftMouseDragged` events from other apps and inspects `NSPasteboard(.drag).changeCount`. The count only advances when a real drag-and-drop session starts, so plain mouse drags over empty space are ignored. The panel appears after a short delay (≈1 s) so quick accidental drags don't flash it.
 - **Multi-file drag-out** — SwiftUI's `.onDrag` returns a single `NSItemProvider`, which can't represent a set of files. `MultiFileDragSource` wraps the dragged content in an `NSView` that conforms to `NSDraggingSource` and starts a session with one `NSDraggingItem` per URL. Finder treats them as a single multi-file drop.
 - **Floating shelf window** — the popup is an `NSPanel` with `.nonactivatingPanel + .borderless` styling, pinned to `.floating` level next to the cursor. It never steals focus from the ongoing drag. The file-stack view opts out of window-movement (`mouseDownCanMoveWindow = false`) so dragging it drags files, not the panel.

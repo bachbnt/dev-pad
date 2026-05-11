@@ -30,6 +30,8 @@
 		B0000032000000000000000A /* DropShelfPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000032000000000000000B /* DropShelfPanelView.swift */; };
 		B0000033000000000000000A /* MultiFileDragSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000033000000000000000B /* MultiFileDragSource.swift */; };
 		B0000034000000000000000A /* DropShelfView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000034000000000000000B /* DropShelfView.swift */; };
+		B0000035000000000000000A /* SQLFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000035000000000000000B /* SQLFormatter.swift */; };
+		B0000036000000000000000A /* SQLFormatterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000036000000000000000B /* SQLFormatterView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -58,6 +60,8 @@
 		B0000032000000000000000B /* DropShelfPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropShelfPanelView.swift; sourceTree = "<group>"; };
 		B0000033000000000000000B /* MultiFileDragSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiFileDragSource.swift; sourceTree = "<group>"; };
 		B0000034000000000000000B /* DropShelfView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DropShelfView.swift; sourceTree = "<group>"; };
+		B0000035000000000000000B /* SQLFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLFormatter.swift; sourceTree = "<group>"; };
+		B0000036000000000000000B /* SQLFormatterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLFormatterView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -115,6 +119,7 @@
 				B0000032000000000000000B /* DropShelfPanelView.swift */,
 				B0000033000000000000000B /* MultiFileDragSource.swift */,
 				B0000034000000000000000B /* DropShelfView.swift */,
+				B0000036000000000000000B /* SQLFormatterView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -129,6 +134,7 @@
 				B0000024000000000000000B /* Localization.swift */,
 				B0000030000000000000000B /* DropShelfManager.swift */,
 				B0000031000000000000000B /* DropShelfMonitor.swift */,
+				B0000035000000000000000B /* SQLFormatter.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -241,6 +247,8 @@
 				B0000032000000000000000A /* DropShelfPanelView.swift in Sources */,
 				B0000033000000000000000A /* MultiFileDragSource.swift in Sources */,
 				B0000034000000000000000A /* DropShelfView.swift in Sources */,
+				B0000035000000000000000A /* SQLFormatter.swift in Sources */,
+				B0000036000000000000000A /* SQLFormatterView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

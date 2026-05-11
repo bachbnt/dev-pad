@@ -75,6 +75,7 @@ final class AppSettings: ObservableObject {
     private static let themeKey = "DevPad.settings.theme"
     private static let languageKey = "DevPad.settings.language"
     private static let dropShelfKey = "DevPad.settings.dropShelfEnabled"
+    private static let purePasteKey = "DevPad.settings.purePasteEnabled"
 
     @Published var theme: AppTheme {
         didSet {
@@ -97,6 +98,15 @@ final class AppSettings: ObservableObject {
         }
     }
 
+    /// When true, rich-text content placed on the system pasteboard is
+    /// automatically replaced with its plain-text version (PurePaste-style).
+    /// Paste then always lands as unformatted text.
+    @Published var purePasteEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(purePasteEnabled, forKey: Self.purePasteKey)
+        }
+    }
+
     /// Set to a Tool rawValue to request navigation in the main window.
     /// MainWindowView consumes and clears this on change.
     @Published var pendingTool: String? = nil
@@ -109,6 +119,7 @@ final class AppSettings: ObservableObject {
         // UserDefaults.bool returns `false` when the key is absent — which
         // is the default we want for the Drop Shelf (off until user opts in).
         self.dropShelfEnabled = UserDefaults.standard.bool(forKey: Self.dropShelfKey)
+        self.purePasteEnabled = UserDefaults.standard.bool(forKey: Self.purePasteKey)
     }
 
     // MARK: - Localization
