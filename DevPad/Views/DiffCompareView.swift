@@ -266,11 +266,16 @@ struct DiffCompareView: View {
         }
         .background(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color(nsColor: .textBackgroundColor))
+        )
+        // Clip content to the rounded rectangle so row backgrounds (red /
+        // green stripes) don't poke into the sharp corners of the parent
+        // rectangle. The stroked outline is drawn as an overlay so the
+        // border stays sharp on top of the clipped content.
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .strokeBorder(Color.secondary.opacity(0.25))
-                .background(
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(Color(nsColor: .textBackgroundColor))
-                )
         )
         // Diff result is the focus once a comparison has been run, so let
         // it take whatever vertical space the window has to spare.
