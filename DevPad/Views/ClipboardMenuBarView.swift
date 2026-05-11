@@ -310,15 +310,75 @@ private struct DropShelfSection: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(manager.urls, id: \.self) { url in
-                        ShelfRow(url: url)
-                        Divider().padding(.leading, 50)
+            VStack(spacing: 0) {
+                stackHandle
+                Divider()
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        ForEach(manager.urls, id: \.self) { url in
+                            ShelfRow(url: url)
+                            Divider().padding(.leading, 50)
+                        }
                     }
                 }
             }
         }
+    }
+
+    /// Fanned stack of file thumbnails (the "drag out all" handle), same
+    /// shape as the one in the main-window Drop Shelf tab and the floating
+    /// popup. The user grabs this to drag every file in the shelf at once.
+    private var stackHandle: some View {
+        MultiFileDragSource(urls: manager.urls) {
+            VStack(spacing: 6) {
+                ZStack {
+                    let visible = Array(manager.urls.suffix(3).enumerated())
+                    ForEach(visible, id: \.element) { (i, url) in
+                        fileTile(for: url)
+                            .rotationEffect(.degrees(Double(i - visible.count + 1) * 4))
+                            .offset(
+                                x: CGFloat(i - visible.count + 1) * 8,
+                                y: CGFloat(visible.count - 1 - i) * -4
+                            )
+                    }
+                }
+                .frame(width: 100, height: 100)
+
+                Text(settings.t("dropshelf.count", manager.urls.count))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 3)
+                    .background(Capsule().fill(Color.secondary.opacity(0.15)))
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+        }
+    }
+
+    private func fileTile(for url: URL) -> some View {
+        let icon = NSWorkspace.shared.icon(forFile: url.path)
+        return VStack(spacing: 2) {
+            Image(nsImage: icon)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 52, height: 52)
+            Text(url.lastPathComponent)
+                .font(.caption2)
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .frame(maxWidth: 80)
+                .foregroundStyle(.primary)
+        }
+        .padding(4)
+        .background(
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(Color(nsColor: .controlBackgroundColor))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .strokeBorder(Color.primary.opacity(0.1))
+        )
     }
 }
 
