@@ -13,6 +13,8 @@ private enum Tool: String, CaseIterable, Identifiable, Hashable {
     case json
     case xml
     case sql
+    case url
+    case qr
     case diff
     case clipboard
     case dropshelf
@@ -25,6 +27,8 @@ private enum Tool: String, CaseIterable, Identifiable, Hashable {
         case .json:      return "sidebar.json"
         case .xml:       return "sidebar.xml"
         case .sql:       return "sidebar.sql"
+        case .url:       return "sidebar.url"
+        case .qr:        return "sidebar.qr"
         case .diff:      return "sidebar.diff"
         case .clipboard: return "sidebar.clipboard"
         case .dropshelf: return "sidebar.dropshelf"
@@ -37,6 +41,8 @@ private enum Tool: String, CaseIterable, Identifiable, Hashable {
         case .json:      return "curlybraces"
         case .xml:       return "chevron.left.forwardslash.chevron.right"
         case .sql:       return "tablecells"
+        case .url:       return "link"
+        case .qr:        return "qrcode"
         case .diff:      return "arrow.left.arrow.right"
         case .clipboard: return "doc.on.clipboard"
         case .dropshelf: return "tray.and.arrow.down"
@@ -68,6 +74,12 @@ struct MainWindowView: View {
             case .sql:
                 SQLFormatterView()
                     .navigationTitle(settings.t("sidebar.sql"))
+            case .url:
+                URLParserView()
+                    .navigationTitle(settings.t("sidebar.url"))
+            case .qr:
+                QRGeneratorView()
+                    .navigationTitle(settings.t("sidebar.qr"))
             case .diff:
                 DiffCompareView()
                     .navigationTitle(settings.t("sidebar.diff"))
