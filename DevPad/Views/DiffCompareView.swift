@@ -51,6 +51,13 @@ struct DiffCompareView: View {
             }
         }
         .padding(16)
+        .onAppear {
+            if DemoMode.isOn, leftText.isEmpty, rightText.isEmpty {
+                leftText = DemoMode.sampleDiffLeft
+                rightText = DemoMode.sampleDiffRight
+                runDiff()
+            }
+        }
     }
 
     // MARK: - Subviews

@@ -25,6 +25,12 @@ struct XMLFormatterView: View {
             footerBar
         }
         .padding(16)
+        .onAppear {
+            if DemoMode.isOn, text.isEmpty {
+                text = DemoMode.sampleXML
+                format()
+            }
+        }
     }
 
     private var controlBar: some View {

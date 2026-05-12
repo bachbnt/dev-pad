@@ -44,6 +44,12 @@ struct URLParserView: View {
             }
         }
         .padding(16)
+        .onAppear {
+            if DemoMode.isOn, input.isEmpty {
+                input = DemoMode.sampleURL
+                parse()
+            }
+        }
     }
 
     // MARK: - Input

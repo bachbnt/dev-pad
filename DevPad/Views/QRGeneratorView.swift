@@ -54,6 +54,12 @@ struct QRGeneratorView: View {
         // vertically.
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(16)
+        .onAppear {
+            if DemoMode.isOn, text.isEmpty {
+                text = DemoMode.sampleQRText
+                generate()
+            }
+        }
     }
 
     private var modePicker: some View {

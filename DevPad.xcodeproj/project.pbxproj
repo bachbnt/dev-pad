@@ -35,6 +35,7 @@
 		B0000037000000000000000A /* URLParserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000037000000000000000B /* URLParserView.swift */; };
 		B0000038000000000000000A /* QRCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000038000000000000000B /* QRCode.swift */; };
 		B0000039000000000000000A /* QRGeneratorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000039000000000000000B /* QRGeneratorView.swift */; };
+		B000003A000000000000000A /* DemoMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B000003A000000000000000B /* DemoMode.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -68,6 +69,7 @@
 		B0000037000000000000000B /* URLParserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLParserView.swift; sourceTree = "<group>"; };
 		B0000038000000000000000B /* QRCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCode.swift; sourceTree = "<group>"; };
 		B0000039000000000000000B /* QRGeneratorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRGeneratorView.swift; sourceTree = "<group>"; };
+		B000003A000000000000000B /* DemoMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoMode.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -144,6 +146,7 @@
 				B0000031000000000000000B /* DropShelfMonitor.swift */,
 				B0000035000000000000000B /* SQLFormatter.swift */,
 				B0000038000000000000000B /* QRCode.swift */,
+				B000003A000000000000000B /* DemoMode.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -261,6 +264,7 @@
 				B0000037000000000000000A /* URLParserView.swift in Sources */,
 				B0000038000000000000000A /* QRCode.swift in Sources */,
 				B0000039000000000000000A /* QRGeneratorView.swift in Sources */,
+				B000003A000000000000000A /* DemoMode.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

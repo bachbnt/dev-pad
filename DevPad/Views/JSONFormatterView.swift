@@ -26,6 +26,12 @@ struct JSONFormatterView: View {
             footerBar
         }
         .padding(16)
+        .onAppear {
+            if DemoMode.isOn, text.isEmpty {
+                text = DemoMode.sampleJSON
+                format()
+            }
+        }
     }
 
     // MARK: - Subviews

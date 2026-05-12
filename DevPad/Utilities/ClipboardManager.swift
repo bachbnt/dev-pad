@@ -104,6 +104,16 @@ final class ClipboardManager: ObservableObject {
         persist()
     }
 
+    /// Seeds the history with a curated list of items. Used by `DemoMode`
+    /// for screenshot/demo builds; no-op if the list is non-empty so we
+    /// never overwrite a real user's clipboard.
+    func injectForDemo(_ samples: [ClipboardItem]) {
+        guard items.isEmpty else { return }
+        items = samples
+        sortAndCap()
+        persist()
+    }
+
     // MARK: - Pasteboard polling
 
     private func checkPasteboard() {

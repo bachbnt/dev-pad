@@ -22,25 +22,17 @@ If you'd rather build from source, see [Build & Run](#build--run) below.
 
 Listed in the same order as the sidebar.
 
-| JSON Formatter | XML Formatter |
-|:-:|:-:|
-| ![JSON Formatter](docs/screenshots/json.png) | ![XML Formatter](docs/screenshots/xml.png) |
+| JSON Formatter | XML Formatter | SQL Formatter |
+|:-:|:-:|:-:|
+| <img src="docs/screenshots/json120526.png" alt="JSON Formatter" width="100%"> | <img src="docs/screenshots/xml120526.png" alt="XML Formatter" width="100%"> | <img src="docs/screenshots/sql120526.png" alt="SQL Formatter" width="100%"> |
 
-| SQL Formatter | URL Parser |
-|:-:|:-:|
-| ![SQL Formatter](docs/screenshots/sql.png) | ![URL Parser](docs/screenshots/urlparser.png) |
+| URL Parser | QR Generator | Diff Compare |
+|:-:|:-:|:-:|
+| <img src="docs/screenshots/url120526.png" alt="URL Parser" width="100%"> | <img src="docs/screenshots/qr120526.png" alt="QR Generator" width="100%"> | <img src="docs/screenshots/diff120526.png" alt="Diff Compare" width="100%"> |
 
-| QR Generator | Diff Compare |
-|:-:|:-:|
-| ![QR Generator](docs/screenshots/qrgenerator.png) | ![Diff Compare](docs/screenshots/diffcompare.png) |
-
-| Clipboard History | Drop Shelf |
-|:-:|:-:|
-| ![Clipboard History](docs/screenshots/clipboard1.png) | ![Drop Shelf](docs/screenshots/dropshelf.png) |
-
-| Settings | |
-|:-:|:-:|
-| ![Settings](docs/screenshots/settings.png) | |
+| Clipboard History | Drop Shelf | Settings |
+|:-:|:-:|:-:|
+| <img src="docs/screenshots/clipboard120526.png" alt="Clipboard History" width="100%"> | <img src="docs/screenshots/drop120526.png" alt="Drop Shelf" width="100%"> | <img src="docs/screenshots/settings120526.png" alt="Settings" width="100%"> |
 
 ## Features
 
@@ -82,6 +74,18 @@ Output: `build/DevPad.dmg`. Mount the DMG and drag `DevPad.app` to Applications.
 > ⚠️ The DMG is built with ad-hoc signing by default (no Apple Developer ID). On first launch you must **right-click → Open** to bypass Gatekeeper.
 >
 > If you have a Developer ID, run `./build_dmg.sh --signed` to use your Xcode signing identity.
+
+### Demo mode
+
+For maintainers who want to grab marketing screenshots quickly, launch the app with a flag that pre-fills every tab with curated sample content (formatted JSON, a multi-line diff, mock clipboard items, drop-shelf files, etc.):
+
+```bash
+# Xcode: Edit Scheme → Run → Arguments → add "--demo-fill"
+# or from the command line:
+DEVPAD_DEMO_FILL=1 open /Applications/DevPad.app
+```
+
+Each tab only injects its sample if its own state is currently empty, so you can still type over the placeholders during a real session. Clipboard / Drop Shelf seeds are skipped when those stores already contain real data — DevPad won't ever overwrite your actual history.
 
 ## Usage
 
@@ -186,6 +190,7 @@ DevPad/
 │   │   ├── ClipboardManager.swift   # NSPasteboard polling + persistence + Pure Paste
 │   │   ├── DropShelfManager.swift   # Shared state for the Drop Shelf
 │   │   ├── DropShelfMonitor.swift   # Global drag detection + floating panel
+│   │   ├── DemoMode.swift           # `--demo-fill` screenshot seeding
 │   │   └── Localization.swift       # EN/VI in-memory string catalog
 │   ├── Views/
 │   │   ├── JSONFormatterView.swift

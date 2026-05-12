@@ -33,6 +33,10 @@ struct DevPadApp: App {
                     clipboard.start()
                     // Sync the Drop Shelf monitor with the persisted setting.
                     DropShelfMonitor.shared.setEnabled(settings.dropShelfEnabled)
+                    // When launched with --demo-fill (or DEVPAD_DEMO_FILL=1),
+                    // pre-load every tab with curated screenshot samples.
+                    // No-op otherwise.
+                    DemoMode.bootstrap()
                 }
                 // Belt-and-suspenders: even if `AppSettings.dropShelfEnabled`'s
                 // didSet doesn't propagate the toggle (e.g. when the change
