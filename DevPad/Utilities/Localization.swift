@@ -114,7 +114,7 @@ enum Localization {
         "clipboard.preview.image":           "🖼 Image — %d×%d, %d KB",
         "clipboard.section.pinned":          "Pinned",
         "clipboard.section.other":           "History",
-        "clipboard.purePaste":               "Pure paste",
+        "clipboard.purePaste":               "Pure Paste",
         "clipboard.purePaste.tooltip":       "Auto-strip rich text formatting from copied text. Paste always lands as plain text.",
 
         // Menu bar

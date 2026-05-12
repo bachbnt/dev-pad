@@ -1,6 +1,6 @@
 # DevPad
 
-A native macOS developer utility — format JSON/XML, compare diffs, track clipboard history, and collect files in a floating drop shelf. Runs quietly in the menu bar and hides the dock icon when the main window is closed.
+A native macOS developer utility — format JSON / XML / SQL, compare diffs, track clipboard history with optional plain-text "Pure Paste" stripping, and collect files in a floating drop shelf. Runs quietly in the menu bar and hides the dock icon when the main window is closed.
 
 ![License](https://img.shields.io/badge/license-Proprietary-blue.svg)
 ![macOS](https://img.shields.io/badge/macOS-13.0+-black.svg)
@@ -22,15 +22,15 @@ If you'd rather build from source, see [Build & Run](#build--run) below.
 
 | JSON Formatter | XML Formatter |
 |:-:|:-:|
-| ![JSON Formatter](docs/screenshots/json.png)  | ![XML Formatter](docs/screenshots/xml.png) |
+| ![JSON Formatter](docs/screenshots/json.png) | ![XML Formatter](docs/screenshots/xml.png) |
 
-| Diff Compare | Settings |
+| Diff Compare | Clipboard History |
 |:-:|:-:|
-| ![Diff Compare](docs/screenshots/diffcompare.png) | ![Settings](docs/screenshots/settings.png)|
+| ![Diff Compare](docs/screenshots/diffcompare.png) | ![Clipboard](docs/screenshots/clipboard1.png) |
 
-| Clipboard History | Drop Shelf |
+| Drop Shelf | Settings |
 |:-:|:-:|
-| ![Clipboard](docs/screenshots/clipboard1.png) | ![Drop Shelf](docs/screenshots/dropshelf.png) |
+| ![Drop Shelf](docs/screenshots/dropshelf.png) | ![Settings](docs/screenshots/settings.png) |
 
 ## Features
 
@@ -83,7 +83,7 @@ After first launch, a clipboard icon appears in the macOS menu bar (top-right). 
 
 ### Main window
 
-Click **Open DevPad** in the menu bar popover footer to open the main window. The sidebar has six tabs:
+Click **Open DevPad** in the menu bar popover footer to open the main window. The sidebar has seven tabs:
 
 | Tab | Description |
 |-----|-------------|
@@ -97,11 +97,28 @@ Click **Open DevPad** in the menu bar popover footer to open the main window. Th
 
 ### Drop Shelf workflow
 
-1. Open the **Drop Shelf** tab in the sidebar (or the Drop Shelf tab in the menu bar) and turn on **Enable**.
+1. Open the **Drop Shelf** tab in the sidebar (or the Drop Shelf tab in the menu bar) and turn on the **Enable Drop Shelf** switch.
 2. Start dragging files from Finder, the Desktop, Mail, or any other source. After ~1 second of dragging, a small floating panel slides in next to the cursor.
 3. Drop the files into the panel. Drag more from a different folder; they pile up in the same shelf.
 4. When you're ready, grab the stack thumbnail in the panel (or in the main-window / menu-bar tab) and drag the whole bundle to a new destination. Finder receives every file in one drop.
 5. Close the floating panel via its X button; the shelf stays populated. Re-open it any time from the menu-bar Drop Shelf tab.
+
+### Pure Paste workflow
+
+1. Open **Clipboard History** (main window or the Clipboard tab in the menu bar) and toggle **Pure paste** on. The setting persists across launches.
+2. Copy text from anywhere — a styled web page, Word document, Notion, Slack, etc.
+3. Paste anywhere (`⌘V`). DevPad has already replaced the rich-text payload on the system pasteboard with its plain-text fallback, so the receiving app gets unformatted text — without you needing to remember `⌘⇧V`.
+4. The plain-text version is also what shows up in the clipboard history list.
+5. Turn the toggle off any time to restore normal copy/paste behaviour (e.g. when you actually want to keep formatting).
+
+### SQL Formatter notes
+
+- Keywords are matched case-insensitively and emitted in upper case (`SELECT`, `FROM`, `WHERE`, `JOIN`, …).
+- Each clause-starter goes on its own line; `AND` / `OR` inside `WHERE` are indented one level past the clause.
+- Comma-separated items in `SELECT` / `VALUES` / `SET` lists each get their own indented line.
+- Subqueries inside `(...)` push the indent level and pop it back on `)`.
+- Inline comments (`-- …`) and block comments (`/* … */`) are preserved verbatim.
+- The **Minify** button collapses the query into a single space-separated line, dropping comments — useful for embedding in code.
 
 ### App lifecycle
 
