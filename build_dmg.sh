@@ -96,12 +96,14 @@ ln -s /Applications "$DMG_STAGE/Applications"
 
 echo "💿  Creating DMG…"
 
-# UDZO = compressed read-only, the standard format for distributed apps.
+# ULFO = read-only, lzfse-compressed. ~10-20% smaller than the legacy UDZO
+# (zlib) format, and ships natively on macOS 10.11+ — comfortably within
+# DevPad's macOS 13+ deployment target.
 hdiutil create \
     -volname "$DMG_VOL_NAME" \
     -srcfolder "$DMG_STAGE" \
     -ov \
-    -format UDZO \
+    -format ULFO \
     "$DMG_PATH" >/dev/null
 
 DMG_SIZE=$(du -h "$DMG_PATH" | cut -f1)

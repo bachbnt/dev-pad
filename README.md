@@ -82,6 +82,8 @@ Output: `build/DevPad.dmg`. Mount the DMG and drag `DevPad.app` to Applications.
 >
 > If you have a Developer ID, run `./build_dmg.sh --signed` to use your Xcode signing identity.
 
+The Release configuration is tuned for smallest binary: `SWIFT_OPTIMIZATION_LEVEL = -Osize`, `LLVM_LTO = YES`, `DEAD_CODE_STRIPPING = YES`, full symbol stripping (`STRIP_INSTALLED_PRODUCT` / `STRIP_SWIFT_SYMBOLS` / `STRIP_STYLE = all`), `DEPLOYMENT_POSTPROCESSING = YES`, and `ASSETCATALOG_COMPILER_OPTIMIZATION = space`. The DMG itself is packaged with `hdiutil -format ULFO` (lzfse) instead of the legacy UDZO zlib — comfortably within the macOS 13+ deployment target. The `DemoMode` injection path is `#if DEBUG`-only so Release builds skip the screenshot-seeding entirely.
+
 ### Demo mode
 
 For maintainers who want to grab marketing screenshots quickly, launch the app with a flag that pre-fills every tab with curated sample content (formatted JSON, a multi-line diff, mock clipboard items, drop-shelf files, etc.):

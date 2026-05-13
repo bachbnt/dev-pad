@@ -26,13 +26,24 @@ enum DemoMode {
 
     /// `true` if the maintainer launched the app expecting auto-populated
     /// sample content (e.g. for taking marketing screenshots).
+    ///
+    /// Release builds always return `false` so the optimizer can dead-code
+    /// strip the entire demo-injection path. The sample-content string
+    /// literals further down still ship in Release (Swift keeps `static
+    /// let` constants reachable from the type metadata), but they're
+    /// never referenced from a hot code path, so they end up unused
+    /// weight only. Wrapping them in `#if DEBUG` would force every view
+    /// that references them to also conditionalise — not worth the
+    /// noise for a few hundred bytes.
     static var isOn: Bool {
+#if DEBUG
         if ProcessInfo.processInfo.arguments.contains(launchArgument) {
             return true
         }
         if ProcessInfo.processInfo.environment[environmentKey] != nil {
             return true
         }
+#endif
         return false
     }
 
