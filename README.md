@@ -1,6 +1,6 @@
 # DevPad
 
-A native macOS developer utility — format JSON / XML / SQL, parse URLs, generate and scan QR codes, compare diffs, track clipboard history with optional plain-text "Pure Paste" stripping, and collect files in a floating drop shelf. Runs quietly in the menu bar and hides the dock icon when the main window is closed.
+A native macOS developer utility — format JSON / XML / SQL, parse URLs, generate and scan QR codes, decode/sign/verify JWTs, test regular expressions, hash text and files, compare diffs, track clipboard history with optional plain-text "Pure Paste" stripping, and collect files in a floating drop shelf. Runs quietly in the menu bar and hides the dock icon when the main window is closed.
 
 ![License](https://img.shields.io/badge/license-Proprietary-blue.svg)
 ![macOS](https://img.shields.io/badge/macOS-13.0+-black.svg)
@@ -8,7 +8,7 @@ A native macOS developer utility — format JSON / XML / SQL, parse URLs, genera
 
 ## Download
 
-Grab the pre-built disk image straight from the repo: **[DevPad.dmg](DevPad.dmg)** (~3 MB).
+Grab the pre-built disk image straight from the repo: **[DevPad.dmg](DevPad.dmg)** (~6 MB).
 
 1. Double-click the downloaded `DevPad.dmg`.
 2. Drag `DevPad.app` into the `Applications` shortcut shown in the mounted volume.
@@ -26,9 +26,13 @@ Listed in the same order as the sidebar.
 |:-:|:-:|:-:|
 | <img src="docs/screenshots/json120526.png" alt="JSON Formatter" width="100%"> | <img src="docs/screenshots/xml120526.png" alt="XML Formatter" width="100%"> | <img src="docs/screenshots/sql120526.png" alt="SQL Formatter" width="100%"> |
 
-| URL Parser | QR Generator | Diff Compare |
+| URL Parser | QR Generator | JWT Inspector |
 |:-:|:-:|:-:|
-| <img src="docs/screenshots/url120526.png" alt="URL Parser" width="100%"> | <img src="docs/screenshots/qr120526.png" alt="QR Generator" width="100%"> | <img src="docs/screenshots/diff120526.png" alt="Diff Compare" width="100%"> |
+| <img src="docs/screenshots/url130526.png" alt="URL Parser" width="100%"> | <img src="docs/screenshots/qr120526.png" alt="QR Generator" width="100%"> | <img src="docs/screenshots/jwt130526.png" alt="JWT Inspector" width="100%"> |
+
+| Regex Tester | Hash Generator | Diff Compare |
+|:-:|:-:|:-:|
+| <img src="docs/screenshots/regex130526.png" alt="Regex Tester" width="100%"> | <img src="docs/screenshots/hash130526.png" alt="Hash Generator" width="100%"> | <img src="docs/screenshots/diff120526.png" alt="Diff Compare" width="100%"> |
 
 | Clipboard History | Drop Shelf | Settings |
 |:-:|:-:|:-:|
@@ -41,6 +45,9 @@ Listed in the same order as the sidebar.
 - **SQL Formatter** — tokenizer-based pretty printer. Uppercases keywords, breaks each major clause (SELECT, FROM, WHERE, JOIN, GROUP BY, …) onto its own line, indents subqueries, and aligns AND / OR. Includes a Minify mode.
 - **URL Parser** — paste a URL, get every component on its own labelled row: scheme, user / password, host, port, path, query string, individual query parameters, fragment. One-click copy for any piece.
 - **QR Generator** — two-mode tool. **Generate**: text/URL → QR image with configurable error-correction level, optional center-icon overlay (logo branding), save as PNG or copy to clipboard. **Scan**: drop or paste any image containing a QR code; DevPad decodes it back to text via the Vision framework, with a "open as link" shortcut for URL payloads.
+- **JWT Inspector** — two-mode tool. **Decode**: paste a JWT, see the header / payload / signature laid out, standard claims (`iss` / `sub` / `aud` / `exp` / `iat` / `nbf` / `jti`) parsed into a readable table, status badge tracking expiry / not-before, and an optional verify panel. Verify supports HS256/384/512 with a plain-string secret, plus RS256/384/512 and ES256/384/512 with a PEM-encoded public key. **Sign**: write your own header + payload JSON, pick an HMAC algorithm (HS256/384/512), supply a secret, get a signed token back. RSA/ECDSA private-key signing is intentionally left to CLI tooling.
+- **Regex Tester** — live regex playground. Type a pattern + test text, every match is painted inline in real attributed `NSTextView`. Toggle flags as pills (case-insensitive `i`, multiline `m`, dot-matches-newline `s`, unicode boundaries `u`). Match list below shows full match plus every capture group (including `(?<name>…)` named groups) with copy buttons. Flip to **Replace** mode to preview the rewritten text and see how many matches were substituted (`$1`, `$&`, etc.). Built-in cheat sheet popover for the most common regex tokens.
+- **Hash Generator** — three-mode tool. **Text**: type or paste a string, see every common digest (MD2, MD4, MD5, SHA-1, SHA-224, SHA-256, SHA-384, SHA-512) live in one table. **File**: drop a file (or pick one) and DevPad streams each algorithm off the main thread so even multi-GB files don't freeze the UI. **HMAC**: message + secret key + SHA-1/256/384/512 → authenticated digest (HMAC-SHA1 included because it's still the default for TOTP, Google Authenticator, AWS Sig v2, and a handful of legacy webhook signers). Toggle output format between Hex and Base64, paste an expected hash into "Compare with" to highlight which algorithm matches, copy individual rows or "Copy all".
 - **Diff Compare** — side-by-side or unified text comparison with git-style hunks, configurable context, inline word/character-level highlighting (red/green), plus Ignore-whitespace and Ignore-case options.
 - **Clipboard History** — automatically saves the last 20 clipboard entries (text + images). Pinned items appear in a separate section, persist across restarts, delete individually or clear all. Includes **Pure Paste** — an on/off toggle that strips rich-text formatting from anything you copy, so subsequent paste lands as plain text everywhere.
 - **Drop Shelf** — Dropover-style floating shelf. Toggle it on and a small panel pops up whenever you start dragging files anywhere on the Mac; drop files into it, accumulate as many as you like, then drag the whole bundle out to a new destination. Multi-file drag is real AppKit `NSDraggingSource` — Finder receives every file at once.
@@ -99,7 +106,7 @@ After first launch, a clipboard icon appears in the macOS menu bar (top-right). 
 
 ### Main window
 
-Click **Open DevPad** in the menu bar popover footer to open the main window. The sidebar has nine tabs:
+Click **Open DevPad** in the menu bar popover footer to open the main window. The sidebar has twelve tabs and a search field at the top so you can jump straight to a tool by typing its name (works in either language):
 
 | Tab | Description |
 |-----|-------------|
@@ -108,6 +115,9 @@ Click **Open DevPad** in the menu bar popover footer to open the main window. Th
 | SQL Formatter | Paste a query, press Format or `⌘↵`. Keywords uppercased, clauses on their own lines, subqueries indented. Minify available. |
 | URL Parser | Paste a URL, press Parse or `⌘↵`. Every component (scheme, host, path, query items, fragment) listed with one-click copy. |
 | QR Generator | Generate QR from text or scan QR from an image. Toggle the mode at the top. |
+| JWT Inspector | Decode a JWT into header / payload / signature with parsed claims and a status badge, or sign a fresh HMAC token. Optional verify panel supports HS\*/RS\*/ES\*. |
+| Regex Tester | Type a regex + test string, press Match or `⌘↵`. Matches highlight inline, capture groups (and `(?<name>…)`) listed below. Replace mode previews the rewrite via the **Apply** button. Cheat sheet popover for common tokens. |
+| Hash Generator | Hash text, files, or HMAC-authenticate a message. Eight algorithms (MD2 / MD4 / MD5 / SHA-1 / SHA-224 / SHA-256 / SHA-384 / SHA-512) shown at once, Hex or Base64 output, "Compare with" field for verification. Press **Hash** / **Generate** (`⌘↵`) in Text and HMAC modes; File mode hashes automatically on drop. |
 | Diff Compare | Two text panes side-by-side, press Compare or `⌘↵`. Switch between Split / Unified view, adjust context size, toggle Ignore whitespace / case. |
 | Clipboard History | Full view with a detail pane on the right; pinned items grouped on top. The header has a **Pure paste** toggle that strips rich-text formatting from copied text. |
 | Drop Shelf | Toggle the feature on/off, see collected files, drag the whole bundle (or individual files) out to any destination |
@@ -137,6 +147,36 @@ Click **Open DevPad** in the menu bar popover footer to open the main window. Th
 - **Copy**: places the QR `NSImage` on the system pasteboard so you can paste into Notes, Mail, Slack, etc.
 - **Scan**: drag an image onto the drop zone, paste one from the clipboard, or choose a file. DevPad runs Apple's Vision framework (`VNDetectBarcodesRequest`) restricted to `.qr` symbology — no third-party dependency. If the decoded text is a URL, a one-click **Open as link** button appears.
 
+### JWT Inspector notes
+
+- **Decode** parses the three dot-separated base64url segments locally — nothing is sent over the network. Header and payload are reformatted with sorted keys for stable diff-friendly output.
+- **Status badge** combines `exp` and `nbf` into a single readable line: *Valid*, *Expired (relative date)*, *Not active until …*, or *No expiration*. Times honour the current locale and the macOS time zone.
+- **Standard claims** — `iss`, `sub`, `aud` (string or array), `exp`, `iat`, `nbf`, `jti` — each get their own row with a one-click copy button. Missing claims show as `—`.
+- **Verify (HMAC)** — for `HS256/384/512` paste the signing secret as a plain string. DevPad uses CryptoKit's constant-time `HMAC.isValidAuthenticationCode`.
+- **Verify (asymmetric)** — for `RS256/384/512` or `ES256/384/512` paste the PEM-encoded **public key**. DevPad parses the SPKI wrapper itself (BIT STRING extraction) and converts the JWT's `R||S` ECDSA signature to ASN.1 DER before calling `SecKeyVerifySignature`. `RSASSA-PKCS1-v1_5` and X9.62 ECDSA are both supported.
+- **Sign** — HMAC only. Header and payload are canonicalised (sorted keys, no escaped slashes) before signing. The `alg` field in the header is kept in sync with the algorithm picker automatically. If you need to sign an RS\*/ES\* token, use a CLI like `step` or `jwt-cli` with the private key — DevPad deliberately keeps private-key parsing out of the app to avoid misuse.
+- **`alg: none`** tokens are refused on verify rather than silently accepted — a long-standing JWT footgun.
+
+### Regex Tester notes
+
+- **Explicit action** — press **Match** (or **Apply** in Replace mode) or hit `⌘↵`. Nothing leaves the app; the engine is `NSRegularExpression`.
+- **Inline highlight** uses a custom `NSTextView` wrapper because SwiftUI's `TextEditor` on macOS 13 doesn't reliably paint attributed backgrounds. The wrapper preserves the caret across re-renders so highlights don't cost you your typing position.
+- **Flag pills** — `i` (case-insensitive), `m` (anchors match line starts/ends), `s` (dot matches newline), `u` (Unicode word boundaries for `\b`, `\w`, etc.). Active flags are also echoed in the `/pattern/imsu` strip next to the pattern field.
+- **Capture groups** — every numbered group is listed under each match. Named groups `(?<name>…)` / `(?'name'…)` / `(?P<name>…)` display the name instead of the index. Groups that didn't participate in the match show as `(no match)`.
+- **Replace mode** uses NSRegularExpression's template language: `$1`, `$2`, `$<name>`, `$&` for the full match, `\$` for a literal dollar. The "Replaced N match(es)" chip is computed from the un-replaced count, so it reflects what was actually substituted.
+- **Cheat sheet** — popover-style quick reference. Doesn't try to be exhaustive; it covers the tokens you'll reach for in 90 % of one-off testing.
+- **Error reporting** — invalid patterns surface the message from `NSRegularExpression` verbatim (usually pinpointing the offending character), keeping the test text untouched so you can fix and continue.
+
+### Hash Generator notes
+
+- **All algorithms at once** — Text and File modes always compute MD2, MD4, MD5, SHA-1, SHA-224, SHA-256, SHA-384, and SHA-512 in parallel so you don't have to flip between them. CryptoKit covers the modern SHA family + MD5/SHA-1 (via `Insecure`); MD2, MD4, and SHA-224 come from `CommonCrypto`. No third-party dependencies.
+- **Legacy algorithms** — MD2, MD4, MD5, SHA-1 are cryptographically broken and present only so you can *inspect* hashes coming from legacy systems (old CRC fields, deprecated protocols, etc.). Don't use them for new security-sensitive work; SHA-256 or stronger is the floor for that.
+- **File streaming** — File mode reads in 1 MB chunks and feeds them into the hash function incrementally (`.update(data:)` then `.finalize()`), so memory stays bounded for any file size. Hashing runs on a detached `Task`; the UI shows a per-row "Hashing…" spinner until each digest lands.
+- **HMAC** — message + secret key authenticate with SHA-1/256/384/512 via CryptoKit's constant-time `HMAC<H>` (using `Insecure.SHA1` for the SHA-1 variant). HMAC-MD2 / MD4 / MD5 / SHA-224 are intentionally omitted; if you really need them, reach for `openssl dgst -hmac …` instead.
+- **Compare with** — paste a hash from a download page / changelog / build manifest, and the matching row gets a green ✓ badge plus a tinted background. The comparison is case-insensitive, ignores whitespace, and strips common separators (`:` / `-`) so formatting differences don't trip it up.
+- **Output format** — toggle between lowercase hex (default) and Base64. Both representations are computed from the same raw digest bytes, so switching never re-hashes the input.
+- **Copy** — per-row copy or "Copy all" which produces a multi-line `ALGO: digest` block that's safe to paste into a README or changelog.
+
 ### Pure Paste workflow
 
 1. Open **Clipboard History** (main window or the Clipboard tab in the menu bar) and toggle **Pure paste** on. The setting persists across launches.
@@ -165,7 +205,7 @@ This follows the standard menu-bar app pattern (similar to Maccy, Bartender). Un
 
 | Key | Action |
 |-----|--------|
-| `⌘↵` | Run the primary action of the current tab — Format (JSON / XML / SQL), Parse (URL), Generate QR, or Compare (Diff) |
+| `⌘↵` | Run the primary action of the current tab — Format (JSON / XML / SQL), Parse (URL), Generate QR, Decode / Sign (JWT), Match / Apply (Regex), Hash / Generate (Hash text & HMAC), or Compare (Diff). |
 | `⌘,` | Open Settings |
 | `⌘Q` | Quit (only when the window is focused) |
 
@@ -186,6 +226,9 @@ DevPad/
 │   │   ├── XMLFormatter.swift       # Tokenizer-based pretty printer
 │   │   ├── SQLFormatter.swift       # Tokenizer-based SQL pretty printer + minifier
 │   │   ├── QRCode.swift             # CoreImage generate + Vision decode
+│   │   ├── JWT.swift                # JWT decode + HMAC sign + HMAC/RSA/ECDSA verify
+│   │   ├── RegexEngine.swift        # NSRegularExpression wrapper + named-group parser
+│   │   ├── Hashing.swift            # CryptoKit hashes + HMAC + streaming file hash
 │   │   ├── DiffEngine.swift         # LCS line/word diff + hunk grouping
 │   │   ├── ClipboardManager.swift   # NSPasteboard polling + persistence + Pure Paste
 │   │   ├── DropShelfManager.swift   # Shared state for the Drop Shelf
@@ -198,6 +241,9 @@ DevPad/
 │   │   ├── SQLFormatterView.swift
 │   │   ├── URLParserView.swift          # Paste URL → labelled components
 │   │   ├── QRGeneratorView.swift        # Generate/scan QR codes
+│   │   ├── JWTInspectorView.swift       # Decode / sign / verify JWTs
+│   │   ├── RegexTesterView.swift        # Live regex matcher + replace mode + cheatsheet
+│   │   ├── HashGeneratorView.swift      # Hash text / files / HMAC with compare-with
 │   │   ├── DiffCompareView.swift
 │   │   ├── ClipboardHistoryView.swift   # Full window detail view (Pure Paste toggle)
 │   │   ├── ClipboardMenuBarView.swift   # Tabbed menu-bar popover (Clipboard + Drop Shelf)
@@ -223,6 +269,9 @@ DevPad/
 - **SQL formatter** — pure-Swift tokenizer that recognises keywords (case-insensitive matching, uppercased on emit), identifiers, numbers, strings (`'...'` / `"..."` with escaped doubled quotes), line and block comments, operators, and punctuation. Emission rules: a newline before every clause-starter keyword (SELECT, FROM, WHERE, JOIN, …); commas in a SELECT/VALUES/SET list break to a new column-line; subqueries `(…)` push the indent level. The tokenizer-then-emit approach is simple to reason about and easy to extend with new keywords.
 - **URL parser** — defers entirely to Foundation's `URLComponents`. The view's only job is to flatten the parsed components onto a fixed list of rows so the structure is glanceable. Query items are rendered separately from the raw query string so duplicate keys and unusual encoding are obvious at a glance.
 - **QR code** — generation uses CoreImage's `CIQRCodeGenerator` filter (no third-party deps); the raw 21–177-module image is upscaled with `CGAffineTransform(scaleX:y:)` and `.interpolation(.none)` so the modules stay crisp. When a center icon is provided, the QR is composited inside an `NSImage.lockFocus()` block: the QR is drawn first, then a rounded white pad, then the icon — yielding the standard logo-in-the-middle look without needing a third-party library. Decoding uses Vision's `VNDetectBarcodesRequest` filtered to `.qr`; the first observation's `payloadStringValue` is the decoded text. Both calls are synchronous — the workload is tiny and avoids state-management overhead.
+- **JWT** — decoding is pure Foundation: split on `.`, base64url-decode each segment, `JSONSerialization` for header and payload. HMAC sign / verify uses CryptoKit (`HMAC<SHA256/384/512>`) and runs in constant time. Asymmetric verify uses Security framework's `SecKeyCreateWithData` + `SecKeyVerifySignature`; the PEM body is parsed inline — for RSA, the SPKI wrapper is walked to extract the inner `RSAPublicKey` PKCS#1 bytes; for EC, the X9.63 uncompressed point is read straight from the SPKI BIT STRING. ECDSA signatures inside JWTs are JOSE-encoded as `R||S`, but `SecKey` wants ASN.1 DER, so DevPad converts on the fly. The verifier explicitly refuses `alg: none` tokens.
+- **Regex** — Foundation's `NSRegularExpression` does the heavy lifting. Recomputes are debounced via a single cancellable `Task` (≈200 ms) so the highlight tracks typing without blocking the main thread. Named groups (`(?<name>…)`, `(?'name'…)`, `(?P<name>…)`) aren't exposed by NSRegularExpression's public API, so DevPad has a small hand-rolled scanner that walks the pattern and maps group index → name (skipping `(?:…)`, lookarounds, and inline flag groups). Inline match painting uses a thin `NSViewRepresentable` over `NSTextView` because SwiftUI's `TextEditor` on macOS 13 can't apply background attributes reliably; the wrapper restores the caret position on every update so highlighting doesn't cost the user their typing context.
+- **Hash** — mix of CryptoKit and CommonCrypto, no third-party deps. CryptoKit covers MD5 / SHA-1 (via `Insecure`) and SHA-256 / SHA-384 / SHA-512 (top-level types). MD2, MD4, and SHA-224 don't have CryptoKit counterparts, so DevPad calls the C symbols from `CommonCrypto` (`CC_MD2` / `CC_MD4` / `CC_SHA224` for one-shot, `CC_xxx_Init` / `_Update` / `_Final` for file streaming). Apple has marked MD2 / MD4 as deprecated in their SDK; to avoid noisy build warnings DevPad re-imports those four C symbols via `@_silgen_name` aliases that strip the deprecation attribute. File mode opens a `FileHandle`, reads 1 MB chunks, feeds each into the hash's `update(data:)` (or `CC_xxx_Update`), then `finalize()`s — bounded memory regardless of file size. Each algorithm runs sequentially on a detached `Task`, with the UI receiving incremental updates via `MainActor.run`. The "Compare with" check trims whitespace and strips `:` / `-` so a hash copied from `shasum`, a changelog, or a GitHub release artifact all match the same digest. HMAC reuses CryptoKit's `HMAC<SHA256/384/512>` which is constant-time by construction.
 - **Pure Paste** — when toggled on, `ClipboardManager` inspects the system pasteboard each tick. If the clipboard advertises any rich-text representation (`.rtf`, `.rtfd`, `.html`, `WebArchivePboardType`, …) alongside the plain string, the manager overwrites the pasteboard with just the plain text and records the plain version in history. A `suppressNextChange` flag prevents the rewrite from being re-processed as a brand-new clipboard event.
 - **Drop Shelf detection** — an `NSEvent` global monitor watches `.leftMouseDragged` events from other apps and inspects `NSPasteboard(.drag).changeCount`. The count only advances when a real drag-and-drop session starts, so plain mouse drags over empty space are ignored. The panel appears after a short delay (≈1 s) so quick accidental drags don't flash it.
 - **Multi-file drag-out** — SwiftUI's `.onDrag` returns a single `NSItemProvider`, which can't represent a set of files. `MultiFileDragSource` wraps the dragged content in an `NSView` that conforms to `NSDraggingSource` and starts a session with one `NSDraggingItem` per URL. Finder treats them as a single multi-file drop.

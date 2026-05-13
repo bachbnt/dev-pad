@@ -15,6 +15,9 @@ private enum Tool: String, CaseIterable, Identifiable, Hashable {
     case sql
     case url
     case qr
+    case jwt
+    case regex
+    case hash
     case diff
     case clipboard
     case dropshelf
@@ -29,6 +32,9 @@ private enum Tool: String, CaseIterable, Identifiable, Hashable {
         case .sql:       return "sidebar.sql"
         case .url:       return "sidebar.url"
         case .qr:        return "sidebar.qr"
+        case .jwt:       return "sidebar.jwt"
+        case .regex:     return "sidebar.regex"
+        case .hash:      return "sidebar.hash"
         case .diff:      return "sidebar.diff"
         case .clipboard: return "sidebar.clipboard"
         case .dropshelf: return "sidebar.dropshelf"
@@ -43,6 +49,9 @@ private enum Tool: String, CaseIterable, Identifiable, Hashable {
         case .sql:       return "tablecells"
         case .url:       return "link"
         case .qr:        return "qrcode"
+        case .jwt:       return "key"
+        case .regex:     return "asterisk"
+        case .hash:      return "number"
         case .diff:      return "arrow.left.arrow.right"
         case .clipboard: return "doc.on.clipboard"
         case .dropshelf: return "tray.and.arrow.down"
@@ -54,13 +63,35 @@ private enum Tool: String, CaseIterable, Identifiable, Hashable {
 struct MainWindowView: View {
     @EnvironmentObject private var settings: AppSettings
     @State private var selection: Tool = .json
+    @State private var searchQuery: String = ""
+    @FocusState private var searchFocused: Bool
+
+    /// Tools whose localized title contains `searchQuery`
+    /// (case-insensitive, whitespace-trimmed). Returns every tool when the
+    /// query is empty so the sidebar shows its full list by default.
+    private var filteredTools: [Tool] {
+        let q = searchQuery
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        guard !q.isEmpty else { return Tool.allCases }
+        return Tool.allCases.filter {
+            settings.t($0.titleKey).lowercased().contains(q)
+        }
+    }
 
     var body: some View {
         NavigationSplitView {
-            List(Tool.allCases, id: \.self, selection: $selection) { tool in
-                Label(settings.t(tool.titleKey), systemImage: tool.icon)
+            VStack(spacing: 0) {
+                searchField
+                if filteredTools.isEmpty {
+                    searchEmptyState
+                } else {
+                    List(filteredTools, id: \.self, selection: $selection) { tool in
+                        Label(settings.t(tool.titleKey), systemImage: tool.icon)
+                    }
+                    .listStyle(.sidebar)
+                }
             }
-            .listStyle(.sidebar)
             .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 260)
             .navigationTitle(settings.t("app.name"))
         } detail: {
@@ -80,6 +111,15 @@ struct MainWindowView: View {
             case .qr:
                 QRGeneratorView()
                     .navigationTitle(settings.t("sidebar.qr"))
+            case .jwt:
+                JWTInspectorView()
+                    .navigationTitle(settings.t("sidebar.jwt"))
+            case .regex:
+                RegexTesterView()
+                    .navigationTitle(settings.t("sidebar.regex"))
+            case .hash:
+                HashGeneratorView()
+                    .navigationTitle(settings.t("sidebar.hash"))
             case .diff:
                 DiffCompareView()
                     .navigationTitle(settings.t("sidebar.diff"))
@@ -97,9 +137,59 @@ struct MainWindowView: View {
         .onChange(of: settings.pendingTool) { pending in
             if let raw = pending, let tool = Tool(rawValue: raw) {
                 selection = tool
+                // Clear the search so the navigated-to tool is actually
+                // visible in the sidebar after the jump.
+                searchQuery = ""
                 settings.pendingTool = nil
             }
         }
+    }
+
+    // MARK: - Sidebar search
+
+    private var searchField: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+                .font(.callout)
+            TextField(settings.t("sidebar.search.placeholder"), text: $searchQuery)
+                .textFieldStyle(.plain)
+                .focused($searchFocused)
+            if !searchQuery.isEmpty {
+                Button {
+                    searchQuery = ""
+                    searchFocused = true
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.tertiary)
+                }
+                .buttonStyle(.plain)
+                .help(settings.t("sidebar.search.clear"))
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 5)
+        .background(
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(Color.secondary.opacity(0.12))
+        )
+        .padding(.horizontal, 10)
+        .padding(.top, 10)
+        .padding(.bottom, 4)
+    }
+
+    private var searchEmptyState: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 26, weight: .light))
+                .foregroundStyle(.tertiary)
+            Text(settings.t("sidebar.search.empty", searchQuery))
+                .foregroundStyle(.secondary)
+                .font(.callout)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 16)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 

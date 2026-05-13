@@ -103,6 +103,41 @@ enum DemoMode {
 
     static let sampleQRText: String = "https://github.com/bachbnt/dev-pad"
 
+    /// Pattern, flags, and test text for the Regex Tester demo. The pattern
+    /// finds email addresses and captures their `user` and `domain` parts so
+    /// the named-group rendering shows up in the screenshot.
+    static let sampleRegexPattern: String =
+        #"(?<user>[\w.+-]+)@(?<domain>[\w.-]+\.[A-Za-z]{2,})"#
+
+    static let sampleRegexFlags: RegexFlags = [.caseInsensitive, .multiline]
+
+    static let sampleRegexText: String = """
+    Please reach out to [email protected] for product feedback.
+    For billing issues, write to [email protected] or [email protected].
+    Old contact (deprecated): [email protected]
+    """
+
+    /// Plain text seed for the Hash Generator demo. Picked to be long
+    /// enough that every algorithm produces a visually distinct digest.
+    static let sampleHashText: String =
+        "DevPad — a native macOS developer utility. Quick, local, no telemetry."
+
+    /// HS256-signed JWT with a populated payload (iss/sub/aud/exp/iat/nbf/jti).
+    /// `exp` is set to 2030-12-31 so the demo shows a "Valid" status no matter
+    /// when screenshots are captured. Signed with secret = "devpad-demo-secret".
+    static let sampleJWT: String = [
+        // header  : {"alg":"HS256","typ":"JWT","kid":"devpad-key-1"}
+        "eyJhbGciOiJIUzI1NiIsImtpZCI6ImRldnBhZC1rZXktMSIsInR5cCI6IkpXVCJ9",
+        // payload : standard claims + custom name/roles
+        "eyJhdWQiOlsiZGV2cGFkLXdlYiIsImRldnBhZC1tb2JpbGUiXSwiZXhwIjoxOTI" +
+            "zNjE5NjAwLCJpYXQiOjE3NDcwNTk3MDAsImlzcyI6Imh0dHBzOi8vYWNjb3Vud" +
+            "HMuZGV2cGFkLmFwcCIsImp0aSI6IjkyZmM5ZTQ3LWY3MWUtNGI0OS04YjFjLTU" +
+            "wMjkzYTM0YmYwOSIsIm5hbWUiOiJiYWNoYm50Iiwicm9sZXMiOlsiYWRtaW4iL" +
+            "CJlZGl0b3IiXSwic3ViIjoidXNlcl80MiJ9",
+        // signature
+        "Mu5j8btYwHvkLtgI4qVrtxKbnMnxHrqzNyHHGRm0E2I"
+    ].joined(separator: ".")
+
     static let sampleDiffLeft: String = """
     // User authentication
     func login(email: String, password: String) -> Bool {
