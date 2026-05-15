@@ -43,17 +43,6 @@ final class DropShelfMonitor {
     /// sessions.
     private var lastDragChangeCount: Int = 0
 
-    /// Shelf's file count when the current drag session was detected.
-    /// On mouse-up we compare against the count again: unchanged means
-    /// the user dropped the files somewhere other than our shelf, and
-    /// we auto-dismiss the panel so it doesn't linger in the way.
-    private var dragSessionInitialFileCount: Int = 0
-
-    /// `true` once we've recognised the active drag as a file drag and
-    /// either scheduled the show task or saw the panel was already up.
-    /// Reset on mouse-up.
-    private var dragSessionArmed: Bool = false
-
     /// Whether the feature is currently enabled (driven by AppSettings).
     private(set) var isEnabled: Bool = false
 
@@ -124,30 +113,23 @@ final class DropShelfMonitor {
 
     /// Called for every drag tick. Only a real drag-and-drop session (one
     /// that bumped the drag pasteboard's `changeCount`) AND that carries
-    /// *actual* file URL objects (not just a `.fileURL` type declaration)
-    /// arms the show timer. Plain rubber-band selections, text drags,
-    /// colour drags, and window-moving drags hit this method too — they
-    /// don't decode into file URLs, so they're ignored.
+    /// file URLs arms the show timer. Plain rubber-band selections or
+    /// window-moving drags hit this method too — they don't change the
+    /// pasteboard, so they're ignored.
     private func handleDrag() {
         guard isEnabled else { return }
 
         let pb = NSPasteboard(name: .drag)
         let count = pb.changeCount
         guard count != lastDragChangeCount else { return }
-        // Record the count before any other check so a non-file drag
-        // session is "seen" exactly once and not re-evaluated on every
-        // mouse tick.
+        // Only treat this as a "new drag session" if it actually carries
+        // file URLs — non-file drags (text from a browser, colors, etc.)
+        // are ignored. Still record the count so we don't re-evaluate
+        // the same session over and over.
         lastDragChangeCount = count
-        guard pasteboardHasRealFileURLs(pb) else { return }
+        guard pasteboardContainsFileURLs(pb) else { return }
 
-        // Snapshot the shelf's current size for this drag session. On
-        // mouse-up we compare against the live count: same count means
-        // the user dropped elsewhere and we should hide the panel.
-        dragSessionInitialFileCount = DropShelfManager.shared.urls.count
-        dragSessionArmed = true
-
-        // Already shown — nothing to schedule, but the snapshot above
-        // still applies for the close-on-drop-elsewhere check.
+        // Already shown — nothing to schedule.
         if let panel, panel.isVisible { return }
         // Already pending — first scheduler wins.
         if pendingShowTask != nil { return }
@@ -161,7 +143,7 @@ final class DropShelfMonitor {
             // session is still active.
             let nowPb = NSPasteboard(name: .drag)
             guard nowPb.changeCount == self.lastDragChangeCount,
-                  self.pasteboardHasRealFileURLs(nowPb) else { return }
+                  self.pasteboardContainsFileURLs(nowPb) else { return }
 
             let p = self.ensurePanel()
             if !p.isVisible {
@@ -176,43 +158,17 @@ final class DropShelfMonitor {
         // pending panel so we don't flash it after the drag has ended.
         pendingShowTask?.cancel()
         pendingShowTask = nil
-
-        // If we recognised this as a file drag, decide whether to keep
-        // the panel up. SwiftUI's `.onDrop` inside the panel runs slightly
-        // after AppKit's mouse-up; give it a 100 ms grace window before
-        // sampling the shelf count. If the count didn't change, no files
-        // landed in our shelf — the user dropped them somewhere else, so
-        // dismiss the panel automatically.
-        if dragSessionArmed {
-            let baseline = dragSessionInitialFileCount
-            dragSessionArmed = false
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-                guard let self,
-                      let panel = self.panel,
-                      panel.isVisible,
-                      DropShelfManager.shared.urls.count == baseline
-                else { return }
-                panel.orderOut(nil)
-            }
-        }
+        // The panel itself stays visible if it's already up — the user
+        // closes it via the X button. (They might have dropped files into
+        // it and want to keep collecting.)
     }
 
-    /// Strictly verify the drag pasteboard carries at least one *file*
-    /// URL by actually deserialising the URL objects with
-    /// `.urlReadingFileURLsOnly`. The earlier "types contains .fileURL"
-    /// approach turned out to false-positive on some apps that declare
-    /// the type without storing real file-URL data — text drags from
-    /// browsers, for instance — and that would pop the shelf for a
-    /// plain text selection.
-    private func pasteboardHasRealFileURLs(_ pb: NSPasteboard) -> Bool {
-        let options: [NSPasteboard.ReadingOptionKey: Any] = [
-            .urlReadingFileURLsOnly: true
-        ]
-        guard let urls = pb.readObjects(forClasses: [NSURL.self],
-                                        options: options) as? [URL] else {
-            return false
-        }
-        return !urls.isEmpty
+    private func pasteboardContainsFileURLs(_ pb: NSPasteboard) -> Bool {
+        guard let types = pb.types else { return false }
+        // Check both the modern UTType and the legacy NSPasteboardType
+        // identifiers — different sources advertise different ones.
+        return types.contains(.fileURL)
+            || types.contains(NSPasteboard.PasteboardType("public.file-url"))
     }
 
     // MARK: - Panel
