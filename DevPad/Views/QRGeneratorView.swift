@@ -13,10 +13,16 @@
 
 import SwiftUI
 import AppKit
+import AVFoundation
 import UniformTypeIdentifiers
 
 private enum QRMode: String, CaseIterable, Identifiable {
     case generate, scan
+    var id: String { rawValue }
+}
+
+private enum ScanSource: String, CaseIterable, Identifiable {
+    case image, camera
     var id: String { rawValue }
 }
 
@@ -34,10 +40,12 @@ struct QRGeneratorView: View {
     @State private var centerIcon: NSImage?
 
     // Scan state
+    @State private var scanSource: ScanSource = .image
     @State private var scanImage: NSImage?
     @State private var decoded: String = ""
     @State private var scanError: String?
     @State private var isDropTargeted: Bool = false
+    @StateObject private var camera = QRCamera()
 
     var body: some View {
         VStack(spacing: 12) {
@@ -58,6 +66,32 @@ struct QRGeneratorView: View {
             if DemoMode.isOn, text.isEmpty {
                 text = DemoMode.sampleQRText
                 generate()
+            }
+            camera.refreshPermission()
+        }
+        .onDisappear {
+            // Always release the camera when the user leaves the QR tab —
+            // no point keeping the webcam LED on otherwise.
+            camera.stop()
+        }
+        .onChange(of: mode) { newValue in
+            if newValue != .scan {
+                camera.stop()
+            } else if scanSource == .camera {
+                camera.start()
+            }
+        }
+        .onChange(of: scanSource) { newValue in
+            if newValue == .camera {
+                camera.start()
+            } else {
+                camera.stop()
+            }
+        }
+        .onChange(of: camera.decoded) { newValue in
+            if let value = newValue, !value.isEmpty {
+                decoded = value
+                scanError = nil
             }
         }
     }
@@ -262,11 +296,166 @@ struct QRGeneratorView: View {
 
     private var scanView: some View {
         VStack(spacing: 12) {
-            dropZone
+            scanSourcePicker
+            switch scanSource {
+            case .image:  dropZone
+            case .camera: cameraScanView
+            }
+            // Surface either the file-scan error or a camera-engine error
+            // (rare: "no device" / "can't add input"). They're mutually
+            // exclusive in practice because each is tied to its own
+            // sub-mode, so prefer whichever applies to the active source.
             if let scanError {
                 errorBanner(scanError)
+            } else if scanSource == .camera, let camErr = camera.errorMessage {
+                errorBanner(camErr)
             }
             decodedTextArea
+        }
+    }
+
+    private var scanSourcePicker: some View {
+        Picker("", selection: $scanSource) {
+            Label(settings.t("qr.scan.source.image"),
+                  systemImage: "photo").tag(ScanSource.image)
+            Label(settings.t("qr.scan.source.camera"),
+                  systemImage: "camera").tag(ScanSource.camera)
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .frame(maxWidth: 280)
+    }
+
+    // MARK: - Camera scan
+
+    @ViewBuilder
+    private var cameraScanView: some View {
+        switch camera.permission {
+        case .notDetermined: cameraPermissionRequest
+        case .denied, .restricted: cameraPermissionDenied
+        case .authorized: cameraPreviewPanel
+        }
+    }
+
+    private var cameraPermissionRequest: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "video.slash")
+                .font(.system(size: 44, weight: .light))
+                .foregroundStyle(.secondary)
+            Text(settings.t("qr.scan.camera.permission"))
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+            Button {
+                camera.requestAccess()
+            } label: {
+                Label(settings.t("qr.scan.camera.allow"),
+                      systemImage: "camera.fill")
+                    .frame(minWidth: 140)
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .frame(maxWidth: .infinity, minHeight: 240)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Color.secondary.opacity(0.05))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(Color.secondary.opacity(0.25),
+                              style: StrokeStyle(lineWidth: 1, dash: [6]))
+        )
+    }
+
+    private var cameraPermissionDenied: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "exclamationmark.shield")
+                .font(.system(size: 44, weight: .light))
+                .foregroundStyle(.red)
+            Text(settings.t("qr.scan.camera.denied"))
+                .font(.headline)
+            Text(settings.t("qr.scan.camera.deniedHint"))
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+            Button {
+                camera.openSystemSettings()
+            } label: {
+                Label(settings.t("qr.scan.camera.openSettings"),
+                      systemImage: "gear")
+                    .frame(minWidth: 200)
+            }
+        }
+        .frame(maxWidth: .infinity, minHeight: 240)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Color.red.opacity(0.06))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(Color.red.opacity(0.25))
+        )
+    }
+
+    private var cameraPreviewPanel: some View {
+        VStack(spacing: 8) {
+            ZStack(alignment: .topTrailing) {
+                CameraPreviewView(session: camera.session)
+                    .frame(minHeight: 280, maxHeight: 360)
+                    .background(Color.black)
+                    .clipShape(RoundedRectangle(cornerRadius: 10,
+                                                style: .continuous))
+
+                if !camera.isRunning {
+                    // Dim overlay while session is stopped so the panel
+                    // doesn't look like a frozen frame.
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color.black.opacity(0.55))
+                    VStack(spacing: 8) {
+                        Image(systemName: "video.slash.fill")
+                            .font(.system(size: 30, weight: .light))
+                            .foregroundStyle(.white.opacity(0.9))
+                        Text(settings.t("qr.scan.camera.stopped"))
+                            .foregroundStyle(.white.opacity(0.9))
+                            .font(.callout)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
+            HStack(spacing: 8) {
+                if camera.isRunning {
+                    Button {
+                        camera.stop()
+                    } label: {
+                        Label(settings.t("qr.scan.camera.stop"),
+                              systemImage: "stop.fill")
+                    }
+                } else {
+                    Button {
+                        camera.start()
+                    } label: {
+                        Label(settings.t("qr.scan.camera.start"),
+                              systemImage: "play.fill")
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+                if !decoded.isEmpty {
+                    Button(role: .destructive) {
+                        decoded = ""
+                        camera.clearDecoded()
+                    } label: {
+                        Label(settings.t("common.clear"), systemImage: "trash")
+                    }
+                }
+                Spacer()
+                Text(camera.isRunning
+                     ? settings.t("qr.scan.camera.hint.running")
+                     : settings.t("qr.scan.camera.hint.idle"))
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
         }
     }
 
@@ -558,6 +747,54 @@ struct QRGeneratorView: View {
         let pb = NSPasteboard.general
         pb.clearContents()
         pb.setString(s, forType: .string)
+    }
+}
+
+// MARK: - Camera preview bridge
+
+/// Thin SwiftUI wrapper around `AVCaptureVideoPreviewLayer`. The view is
+/// **layer-hosting** rather than layer-backed: AppKit's rule is that to
+/// substitute your own `CALayer` you must override `makeBackingLayer()`
+/// and return the layer there, *then* set `wantsLayer = true`. Doing the
+/// reverse — setting `wantsLayer = true` first and then assigning
+/// `layer = …` — leaves the auto-created AppKit layer in place on some
+/// macOS versions and is what triggered the original `EXC_BAD_ACCESS`.
+private struct CameraPreviewView: NSViewRepresentable {
+    let session: AVCaptureSession
+
+    func makeNSView(context: Context) -> PreviewNSView {
+        let v = PreviewNSView()
+        v.previewLayer.session = session
+        return v
+    }
+
+    func updateNSView(_ nsView: PreviewNSView, context: Context) {
+        if nsView.previewLayer.session !== session {
+            nsView.previewLayer.session = session
+        }
+    }
+
+    final class PreviewNSView: NSView {
+        let previewLayer = AVCaptureVideoPreviewLayer()
+
+        override init(frame frameRect: NSRect) {
+            super.init(frame: frameRect)
+            wantsLayer = true
+        }
+        required init?(coder: NSCoder) {
+            fatalError("init(coder:) is not supported")
+        }
+
+        override func makeBackingLayer() -> CALayer {
+            previewLayer.videoGravity = .resizeAspectFill
+            previewLayer.contentsGravity = .resizeAspectFill
+            return previewLayer
+        }
+
+        override func layout() {
+            super.layout()
+            previewLayer.frame = bounds
+        }
     }
 }
 

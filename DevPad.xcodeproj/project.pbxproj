@@ -42,6 +42,7 @@
 		B000003E000000000000000A /* RegexTesterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B000003E000000000000000B /* RegexTesterView.swift */; };
 		B000003F000000000000000A /* Hashing.swift in Sources */ = {isa = PBXBuildFile; fileRef = B000003F000000000000000B /* Hashing.swift */; };
 		B0000040000000000000000A /* HashGeneratorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000040000000000000000B /* HashGeneratorView.swift */; };
+		B0000041000000000000000A /* QRCamera.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000041000000000000000B /* QRCamera.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -82,6 +83,7 @@
 		B000003E000000000000000B /* RegexTesterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegexTesterView.swift; sourceTree = "<group>"; };
 		B000003F000000000000000B /* Hashing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Hashing.swift; sourceTree = "<group>"; };
 		B0000040000000000000000B /* HashGeneratorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HashGeneratorView.swift; sourceTree = "<group>"; };
+		B0000041000000000000000B /* QRCamera.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCamera.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -165,6 +167,7 @@
 				B000003B000000000000000B /* JWT.swift */,
 				B000003D000000000000000B /* RegexEngine.swift */,
 				B000003F000000000000000B /* Hashing.swift */,
+				B0000041000000000000000B /* QRCamera.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -289,6 +292,7 @@
 				B000003E000000000000000A /* RegexTesterView.swift in Sources */,
 				B000003F000000000000000A /* Hashing.swift in Sources */,
 				B0000040000000000000000A /* HashGeneratorView.swift in Sources */,
+				B0000041000000000000000A /* QRCamera.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -439,12 +443,13 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "DevPad uses the camera to scan QR codes pointed at it.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 bachbnt. All rights reserved.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.3;
+				MARKETING_VERSION = 1.0.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bachbnt.DevPad;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -467,12 +472,13 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "DevPad uses the camera to scan QR codes pointed at it.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 bachbnt. All rights reserved.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.3;
+				MARKETING_VERSION = 1.0.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bachbnt.DevPad;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
