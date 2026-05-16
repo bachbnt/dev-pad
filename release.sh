@@ -190,7 +190,7 @@ echo ""
 
 # --- build -------------------------------------------------------------------
 
-echo "🏗   Building DMG via build_dmg.sh $SIGNED_FLAG…"
+echo "🏗   Building DMG via build_dmg.sh ${SIGNED_FLAG}…"
 if [[ -n "$SIGNED_FLAG" ]]; then
     ./build_dmg.sh "$SIGNED_FLAG"
 else
