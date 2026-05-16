@@ -8,7 +8,7 @@ A native macOS developer utility — format JSON / XML / SQL, parse URLs, genera
 
 ## Download
 
-Grab the pre-built disk image straight from the repo: **[DevPad.dmg](DevPad.dmg)** (~6 MB).
+Grab the latest pre-built disk image from the GitHub Releases page: **[DevPad.dmg](https://github.com/bachbnt/dev-pad/releases/latest/download/DevPad.dmg)** (~6 MB). This link always points to the most recent release — no need to update the README on every release.
 
 1. Double-click the downloaded `DevPad.dmg`.
 2. Drag `DevPad.app` into the `Applications` shortcut shown in the mounted volume.
@@ -16,7 +16,7 @@ Grab the pre-built disk image straight from the repo: **[DevPad.dmg](DevPad.dmg)
 
 > ⚠️ The build ships with ad-hoc signing (no Apple Developer ID), so the first launch hits Gatekeeper. **Right-click `DevPad.app` → Open**, then click **Open** in the confirmation dialog. macOS remembers the choice for subsequent launches.
 
-If you'd rather build from source, see [Build & Run](#build--run) below.
+Older versions are listed on the [releases page](https://github.com/bachbnt/dev-pad/releases). If you'd rather build from source, see [Build & Run](#build--run) below.
 
 ## Screenshots
 
@@ -84,6 +84,36 @@ Output: `build/DevPad.dmg`. Mount the DMG and drag `DevPad.app` to Applications.
 > If you have a Developer ID, run `./build_dmg.sh --signed` to use your Xcode signing identity.
 
 The Release configuration is tuned for smallest binary: `SWIFT_OPTIMIZATION_LEVEL = -Osize`, `LLVM_LTO = YES`, `DEAD_CODE_STRIPPING = YES`, full symbol stripping (`STRIP_INSTALLED_PRODUCT` / `STRIP_SWIFT_SYMBOLS` / `STRIP_STYLE = all`), `DEPLOYMENT_POSTPROCESSING = YES`, and `ASSETCATALOG_COMPILER_OPTIMIZATION = space`. The DMG itself is packaged with `hdiutil -format ULFO` (lzfse) instead of the legacy UDZO zlib — comfortably within the macOS 13+ deployment target. The `DemoMode` injection path is `#if DEBUG`-only so Release builds skip the screenshot-seeding entirely.
+
+### Cutting a release
+
+`release.sh` wraps the whole "bump + build + tag + publish" flow into one command. It runs entirely on the local machine — no CI, no cost. Requires the [`gh` CLI](https://cli.github.com) authenticated once via `gh auth login`.
+
+```bash
+./release.sh v1.0.0                          # ad-hoc signed
+./release.sh v1.0.0 --signed                 # use Xcode Developer ID
+./release.sh v1.1.0-beta1 --prerelease       # mark as pre-release
+./release.sh v1.0.0 --notes "Hotfix: …"      # supply notes instead of auto-generated
+./release.sh v1.0.0 --draft                  # create as draft, finish on the web UI
+./release.sh v1.2.0 --yes                    # skip the version-bump confirm prompt
+```
+
+Pre-flight checks (any failure aborts before building, so a botched call doesn't waste a 90-second Xcode build):
+
+- Version is semver `vX.Y.Z` (optionally `-suffix`).
+- Working tree is clean — no uncommitted changes.
+- Currently on a real branch (not detached HEAD).
+- Tag doesn't already exist locally or on `origin`.
+- `gh` CLI is installed and authenticated.
+
+If those pass, the script then:
+
+1. **Bumps the Xcode version**. `MARKETING_VERSION` in `project.pbxproj` is set to the stripped tag (`v1.1.0` → `1.1.0`) and `CURRENT_PROJECT_VERSION` (the build number) is incremented by 1. The diff is shown and confirmed before commit (skip with `--yes`). The bump is committed and pushed to the current branch, so the tag points at the commit that actually carries the new version — the DMG's About dialog and the GitHub release tag always agree.
+2. **Builds the DMG** via `build_dmg.sh` (ad-hoc or `--signed`).
+3. **Tags + pushes** the new annotated tag to `origin`.
+4. **Creates the GitHub release** with `gh release create`, attaching the DMG. Release notes are auto-generated from PRs / commits since the previous tag unless you pass `--notes`.
+
+The attached DMG is always reachable at the stable [`releases/latest/download/DevPad.dmg`](https://github.com/bachbnt/dev-pad/releases/latest/download/DevPad.dmg) URL, so the README link doesn't need updating between releases.
 
 ### Demo mode (Debug builds only)
 
@@ -264,6 +294,7 @@ DevPad/
 │   └── Preview Content/
 ├── docs/screenshots/                # README screenshots
 ├── build_dmg.sh                     # Release build + DMG packaging
+├── release.sh                       # Tag + GitHub Release + DMG upload
 ├── LICENSE
 └── README.md
 ```
