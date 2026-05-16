@@ -135,7 +135,42 @@ struct DropShelfPanelView: View {
     /// — Dropover-style.
     private var stack: some View {
         let visible = Array(manager.urls.suffix(3).enumerated())
-        return MultiFileDragSource(urls: manager.urls) {
+        // Snapshot the URLs at render time so the cleanup closure clears
+        // exactly the files we handed to AppKit, even if `manager.urls`
+        // changes between the start and end of the drag.
+        let draggedURLs = manager.urls
+        return MultiFileDragSource(
+            urls: manager.urls,
+            onSessionStart: {
+                // Flip a flag so the monitor's global mouseUp handler
+                // doesn't race with us and dismiss the popup behind
+                // our back. We DON'T hide the panel here on purpose:
+                // if the user changes their mind mid-drag, we want the
+                // popup still on screen when they let go.
+                DropShelfMonitor.shared.internalDragDidBegin()
+            },
+            onSessionEnd: { endPoint, operation in
+                defer { DropShelfMonitor.shared.internalDragDidEnd() }
+                // Drag was cancelled (Esc, dropped on an invalid
+                // target) — leave the popup alone so the user can try
+                // again or just put the files back.
+                guard operation != [] else { return }
+                // Drop landed back inside the popup itself. The files
+                // are already in `manager`, so there's nothing to do —
+                // and definitely don't clear / hide.
+                if let panelFrame = DropShelfMonitor.shared.visiblePanelFrame,
+                   panelFrame.contains(endPoint) {
+                    return
+                }
+                // Real delivery somewhere else (Finder, another app,
+                // the desktop). Clear the moved files from the shelf
+                // and dismiss the popup.
+                Task { @MainActor in
+                    for url in draggedURLs { manager.remove(url) }
+                    DropShelfMonitor.shared.hidePanel()
+                }
+            }
+        ) {
             ZStack {
                 ForEach(visible, id: \.element) { (i, url) in
                     thumbnail(for: url)

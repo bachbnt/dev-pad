@@ -125,7 +125,21 @@ struct DropShelfView: View {
 
     /// Stack thumbnail used as a drag source for ALL files in the shelf.
     private var stackHandle: some View {
-        MultiFileDragSource(urls: manager.urls) {
+        // Snapshot at render time — see DropShelfPanelView.stack for the
+        // same pattern. Drag-out semantics across every shelf surface
+        // (popup, in-app, menubar) is "move": when the destination
+        // accepts the drop, the files belong to it now, so drop them
+        // from the shared shelf state too.
+        let draggedURLs = manager.urls
+        return MultiFileDragSource(
+            urls: manager.urls,
+            onSessionEnd: { _, operation in
+                guard operation != [] else { return }
+                Task { @MainActor in
+                    for url in draggedURLs { DropShelfManager.shared.remove(url) }
+                }
+            }
+        ) {
             ZStack {
                 let visible = Array(manager.urls.suffix(3).enumerated())
                 ForEach(visible, id: \.element) { (i, url) in
@@ -178,7 +192,18 @@ private struct FileRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            MultiFileDragSource(urls: [url]) {
+            MultiFileDragSource(
+                urls: [url],
+                onSessionEnd: { [url] _, operation in
+                    // Per-row drag: dropping this single file outside
+                    // means it's been delivered → drop it from the
+                    // shared shelf state.
+                    guard operation != [] else { return }
+                    Task { @MainActor in
+                        DropShelfManager.shared.remove(url)
+                    }
+                }
+            ) {
                 Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
                     .resizable()
                     .aspectRatio(contentMode: .fit)

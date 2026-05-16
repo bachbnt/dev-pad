@@ -334,7 +334,19 @@ private struct DropShelfSection: View {
     /// shape as the one in the main-window Drop Shelf tab and the floating
     /// popup. The user grabs this to drag every file in the shelf at once.
     private var stackHandle: some View {
-        MultiFileDragSource(urls: manager.urls) {
+        // Snapshot at render time so the cleanup closure clears exactly
+        // the files we handed to AppKit. Mirrors the popup / in-app
+        // behavior: a successful drop = "move", so remove from shelf.
+        let draggedURLs = manager.urls
+        return MultiFileDragSource(
+            urls: manager.urls,
+            onSessionEnd: { _, operation in
+                guard operation != [] else { return }
+                Task { @MainActor in
+                    for url in draggedURLs { DropShelfManager.shared.remove(url) }
+                }
+            }
+        ) {
             VStack(spacing: 6) {
                 ZStack {
                     let visible = Array(manager.urls.suffix(3).enumerated())
@@ -394,7 +406,15 @@ private struct ShelfRow: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 10) {
-            MultiFileDragSource(urls: [url]) {
+            MultiFileDragSource(
+                urls: [url],
+                onSessionEnd: { [url] _, operation in
+                    guard operation != [] else { return }
+                    Task { @MainActor in
+                        DropShelfManager.shared.remove(url)
+                    }
+                }
+            ) {
                 Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
                     .resizable()
                     .aspectRatio(contentMode: .fit)

@@ -24,21 +24,45 @@ import AppKit
 
 struct MultiFileDragSource<Content: View>: NSViewRepresentable {
     let urls: [URL]
+    /// Fires the instant AppKit commits to a drag session (mouse moved
+    /// past the threshold and `beginDraggingSession` was called). Use
+    /// this to react to "the user is dragging the files OUT of here"
+    /// — e.g. dismiss a floating panel that owns this source.
+    let onSessionStart: (() -> Void)?
+    /// Fires when the drag session ends. Receives:
+    /// - the screen-coordinate point where the mouse came up, and
+    /// - the operation the destination chose (`.move`, `.copy`,
+    ///   `.link`, or `[]` if the drop was cancelled / landed on an
+    ///   invalid target — non-empty means the files were actually
+    ///   delivered somewhere).
+    /// Both pieces are needed so callers can decide whether to clean
+    /// up state based on WHERE the drop happened, not just whether it
+    /// happened.
+    let onSessionEnd: ((NSPoint, NSDragOperation) -> Void)?
     let content: () -> Content
 
-    init(urls: [URL], @ViewBuilder content: @escaping () -> Content) {
+    init(urls: [URL],
+         onSessionStart: (() -> Void)? = nil,
+         onSessionEnd: ((NSPoint, NSDragOperation) -> Void)? = nil,
+         @ViewBuilder content: @escaping () -> Content) {
         self.urls = urls
+        self.onSessionStart = onSessionStart
+        self.onSessionEnd = onSessionEnd
         self.content = content
     }
 
     func makeNSView(context: Context) -> DragSourceHostView<Content> {
         let view = DragSourceHostView(rootView: content())
         view.urls = urls
+        view.onSessionStart = onSessionStart
+        view.onSessionEnd = onSessionEnd
         return view
     }
 
     func updateNSView(_ nsView: DragSourceHostView<Content>, context: Context) {
         nsView.urls = urls
+        nsView.onSessionStart = onSessionStart
+        nsView.onSessionEnd = onSessionEnd
         nsView.update(rootView: content())
     }
 }
@@ -49,6 +73,8 @@ struct MultiFileDragSource<Content: View>: NSViewRepresentable {
 final class DragSourceHostView<Content: View>: NSView, NSDraggingSource {
 
     var urls: [URL] = []
+    var onSessionStart: (() -> Void)?
+    var onSessionEnd: ((NSPoint, NSDragOperation) -> Void)?
 
     private let hosting: NSHostingView<Content>
     private var mouseDownLocation: NSPoint?
@@ -155,5 +181,16 @@ final class DragSourceHostView<Content: View>: NSView, NSDraggingSource {
     /// re-dropping into our own window (e.g. another shelf in the future).
     func ignoreModifierKeys(for session: NSDraggingSession) -> Bool {
         false
+    }
+
+    func draggingSession(_ session: NSDraggingSession,
+                         willBeginAt screenPoint: NSPoint) {
+        onSessionStart?()
+    }
+
+    func draggingSession(_ session: NSDraggingSession,
+                         endedAt screenPoint: NSPoint,
+                         operation: NSDragOperation) {
+        onSessionEnd?(screenPoint, operation)
     }
 }

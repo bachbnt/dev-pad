@@ -46,6 +46,14 @@ final class DropShelfMonitor {
     /// Whether the feature is currently enabled (driven by AppSettings).
     private(set) var isEnabled: Bool = false
 
+    /// True while a drag started FROM the popup is in flight. We use
+    /// this to suppress `handleMouseUp`'s "drop landed outside the
+    /// popup → auto-dismiss" branch, because for popup-initiated
+    /// drags the source's own `onSessionEnd` callback is authoritative
+    /// and knows the difference between a real delivery and a
+    /// cancelled drag (where the popup should STAY visible).
+    private var isInternalDragInProgress: Bool = false
+
     private init() {}
 
     // MARK: - Public
@@ -62,6 +70,21 @@ final class DropShelfMonitor {
     func hidePanel() {
         panel?.orderOut(nil)
     }
+
+    /// Screen-coordinate frame of the popup if it's currently visible,
+    /// `nil` otherwise. Callers (notably the multi-file drag source)
+    /// use this to tell whether a drop landed inside or outside the
+    /// popup at session-end time.
+    var visiblePanelFrame: NSRect? {
+        guard let panel, panel.isVisible else { return nil }
+        return panel.frame
+    }
+
+    /// Called by the popup's drag source when a drag-out session
+    /// begins / ends. Lets `handleMouseUp` step aside while the
+    /// drag-source callbacks handle the decision.
+    func internalDragDidBegin() { isInternalDragInProgress = true }
+    func internalDragDidEnd()   { isInternalDragInProgress = false }
 
     // MARK: - Monitoring
 
@@ -158,9 +181,22 @@ final class DropShelfMonitor {
         // pending panel so we don't flash it after the drag has ended.
         pendingShowTask?.cancel()
         pendingShowTask = nil
-        // The panel itself stays visible if it's already up — the user
-        // closes it via the X button. (They might have dropped files into
-        // it and want to keep collecting.)
+
+        // Popup-initiated drags route through `onSessionEnd` instead,
+        // which can tell a real delivery apart from a mid-drag cancel.
+        // Don't second-guess it from here.
+        guard !isInternalDragInProgress else { return }
+
+        // If the panel is visible but the mouse came up OUTSIDE of it,
+        // the user dropped the files somewhere else (Finder, another
+        // app, the desktop) — auto-dismiss so the popup doesn't linger.
+        // Drops INSIDE the panel keep it visible: the user is still
+        // collecting and may add more files in a moment.
+        guard let panel, panel.isVisible else { return }
+        let cursor = NSEvent.mouseLocation
+        if !panel.frame.contains(cursor) {
+            panel.orderOut(nil)
+        }
     }
 
     private func pasteboardContainsFileURLs(_ pb: NSPasteboard) -> Bool {
