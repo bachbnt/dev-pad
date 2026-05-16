@@ -1,6 +1,6 @@
 ---
 name: devpad-conventions
-description: Use when writing or modifying any Swift file in the DevPad codebase. Covers the UI vocabulary every tab shares (mode picker, action bar, empty state, error banner, drop zone, output preview), the localization rules (EN+VI mirror, English engine errors, `settings.t(...)` everywhere), Swift code style (`@MainActor` singletons, `@StateObject` ownership, comment style), and the threading rules (`DispatchQueue.main.async` not `Task { @MainActor }`, `[weak self]` always when crossing actor boundaries). Reach for this alongside devpad-add-tool when implementing new UI, and alongside devpad-review when checking existing code.
+description: Use when writing or modifying any Swift file in the DevPad codebase, or when changing user-visible features. Covers the UI vocabulary every tab shares (mode picker, action bar, empty state, error banner, drop zone, output preview), the localization rules (EN+VI mirror, English engine errors, `settings.t(...)` everywhere), Swift code style (`@MainActor` singletons, `@StateObject` ownership, comment style, the mandatory `// DevPad — Copyright © <year> bachbnt. Proprietary.` header on every Swift file), the threading rules (`DispatchQueue.main.async` not `Task { @MainActor }`, `[weak self]` always when crossing actor boundaries), and the README-sync rule (any user-visible behavior change must also update README.md in the same change). Reach for this alongside devpad-add-tool when implementing new UI, and alongside devpad-review when checking existing code.
 ---
 
 # DevPad code & UI conventions
@@ -158,7 +158,10 @@ Per-row copy: `.borderless`, secondary color, `Image(systemName: "doc.on.doc")` 
 
 ### File header
 
+Every Swift file in the project starts with a single-line copyright followed by a blank `//` separator, then the Xcode-style file metadata and description block. **Both** the copyright line and the description block are required for new files:
+
 ```swift
+// DevPad — Copyright © 2026 bachbnt. Proprietary.
 //
 //  <FileName>.swift
 //  DevPad
@@ -167,6 +170,13 @@ Per-row copy: `.borderless`, secondary color, `Image(systemName: "doc.on.doc")` 
 //  non-obvious algorithmic or framework choices.
 //
 ```
+
+Rules:
+- The copyright line is exactly `// DevPad — Copyright © <year> bachbnt. Proprietary.` (em-dash `—`, not hyphen; curly `©`).
+- Use the current year — bump it when starting work in a new calendar year.
+- Never split the copyright across multiple lines and never replace it with a longer license blob.
+- When creating new files, paste this header BEFORE writing anything else — it's easy to forget once code is in.
+- When editing existing files, leave the existing copyright year alone unless the user asks for a bump.
 
 ### MARK separators
 
@@ -309,3 +319,28 @@ Especially in delegate methods that AVFoundation dispatches to via raw ObjC poin
 - No `print(…)` left in committed code. Use `os.Logger` if you really need logging.
 - No `force-unwrap` (`!`) unless you can prove unwrap will never fail. Prefer `guard let` with a sensible fallback / `return`.
 - No "TODO:" comments without a tracked task. They rot.
+
+## README sync
+
+The repo's `README.md` is the public face of the project — feature list, screenshots, behavior notes, badges. It is part of the contract with users, not just developer reference.
+
+**When you change user-visible behavior, update the README in the same change.** Specifically:
+
+- New tool, tab, or feature → add it to the prose intro at the top, the screenshots table (with a placeholder if no image yet), and any feature checklist further down.
+- Renamed feature → grep the README for the old name and rename everywhere.
+- Behavior change to an existing feature (e.g. drop shelf auto-closes when you drop outside; "pure paste" stripping defaults to off) → update the description so it reflects the current behavior, not the historical one.
+- Removed feature → strip it from the README entirely. Don't leave dead screenshots or stale bullet points.
+- Keyboard shortcuts, supported OS, Swift version, dependency list → must stay in sync with the actual project.
+
+What counts as "user-visible":
+- Anything the user can see in the UI: a new control, a different default, a change in copy.
+- Anything that changes how the user interacts with a feature: a new shortcut, a removed step, an auto-behavior.
+- NOT internal refactors that don't change observable behavior.
+
+How to do the sync:
+1. After finishing the code change, re-read the relevant section of README.md.
+2. Cross-check every sentence in that section against current code.
+3. Fix outdated descriptions; add notes for new behavior.
+4. If screenshots are affected, leave a TODO bullet in the PR description so a fresh screenshot can be captured before release — don't fabricate or skip the note.
+
+Forgetting this is a quiet failure: the README diverges from the app, and users (or future maintainers) believe the wrong thing.

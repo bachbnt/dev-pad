@@ -1,3 +1,4 @@
+// DevPad — Copyright © 2026 bachbnt. Proprietary.
 //
 //  XMLFormatter.swift
 //  DevPad

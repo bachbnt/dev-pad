@@ -1,3 +1,4 @@
+// DevPad — Copyright © 2026 bachbnt. Proprietary.
 //
 //  MultiFileDragSource.swift
 //  DevPad
@@ -11,12 +12,20 @@
 //
 //  Usage:
 //
-//      MultiFileDragSource(urls: manager.urls) {
+//      MultiFileDragSource(
+//          urls: manager.urls,
+//          onSessionStart: { /* e.g. flip a flag */ },
+//          onSessionEnd: { endPoint, operation in
+//              // operation == [] means the drag was cancelled.
+//          }
+//      ) {
 //          MyStackView()
 //      }
 //
 //  The hosted SwiftUI content is the visual; the surrounding NSView
-//  catches mouseDown / mouseDragged and starts the AppKit drag.
+//  catches mouseDown / mouseDragged and starts the AppKit drag. The
+//  two callbacks are optional — pass `nil` (or just omit them) for the
+//  vanilla "drag-only" behavior.
 //
 
 import SwiftUI
