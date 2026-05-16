@@ -8,10 +8,11 @@
 # Authentication is whatever `gh` already has on the local machine.
 #
 # Usage:
-#   ./release.sh vX.Y.Z [--signed] [--draft] [--prerelease] [--notes "…"] [--yes]
+#   ./release.sh vX.Y.Z [-p|--include-pending] [--signed] [--draft] [--prerelease] [--notes "…"] [--yes]
 #
 # Examples:
-#   ./release.sh v1.0.0
+#   ./release.sh v1.0.0                          # clean-tree required, 2 commits
+#   ./release.sh v1.0.0 -p                       # fold workdir changes into one release commit
 #   ./release.sh v1.1.0-beta1 --prerelease
 #   ./release.sh v1.0.0 --signed --notes "First public release"
 #   ./release.sh v1.2.0 --yes                    # skip the bump confirm prompt
@@ -19,6 +20,8 @@
 # Pre-flight (any failure aborts before building):
 #   - version arg is semver `vX.Y.Z[-suffix]`
 #   - working tree is clean (no uncommitted / unstaged changes)
+#       — RELAXED if -p / --include-pending is passed: workdir may be dirty,
+#         pending changes will be folded into the release commit
 #   - on a real branch (not detached HEAD)
 #   - tag does not already exist locally or on origin
 #   - `gh` is installed and authenticated
@@ -28,8 +31,10 @@
 #     (e.g. v1.1.0 → 1.1.0).
 #   - CURRENT_PROJECT_VERSION (build number) is incremented by 1.
 #   - Script shows the diff and asks for confirm (unless --yes).
-#   - The bump becomes its own commit, pushed before tagging, so the tag
-#     points at the commit that actually carries the new version.
+#   - Default: bump becomes its own commit ("chore: bump version to …").
+#   - With -p: bump + workdir changes go into a single "Release vX.Y.Z"
+#     commit. `git status` is printed before the commit so you can see
+#     exactly what's being included; confirm prompt blocks unless --yes.
 #
 # After publishing, the DMG attached to the release is reachable at the
 # stable "latest" URL:
@@ -45,7 +50,7 @@ cd "$(dirname "$0")"
 # --- args --------------------------------------------------------------------
 
 if [[ $# -lt 1 ]]; then
-    echo "Usage: $0 vX.Y.Z [--signed] [--draft] [--prerelease] [--notes \"…\"] [--yes]" >&2
+    echo "Usage: $0 vX.Y.Z [-p|--include-pending] [--signed] [--draft] [--prerelease] [--notes \"…\"] [--yes]" >&2
     exit 1
 fi
 
@@ -56,14 +61,16 @@ SIGNED_FLAG=""
 RELEASE_FLAGS=()
 NOTES=""
 ASSUME_YES=0
+INCLUDE_PENDING=0
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --signed)      SIGNED_FLAG="--signed"; shift ;;
-        --draft)       RELEASE_FLAGS+=("--draft"); shift ;;
-        --prerelease)  RELEASE_FLAGS+=("--prerelease"); shift ;;
-        --notes)       NOTES="${2:-}"; shift 2 ;;
-        --yes|-y)      ASSUME_YES=1; shift ;;
+        --signed)               SIGNED_FLAG="--signed"; shift ;;
+        --draft)                RELEASE_FLAGS+=("--draft"); shift ;;
+        --prerelease)           RELEASE_FLAGS+=("--prerelease"); shift ;;
+        --notes)                NOTES="${2:-}"; shift 2 ;;
+        --yes|-y)               ASSUME_YES=1; shift ;;
+        --include-pending|-p)   INCLUDE_PENDING=1; shift ;;
         *) echo "❌  Unknown flag: $1" >&2; exit 1 ;;
     esac
 done
@@ -84,15 +91,20 @@ if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
 fi
 echo "    ✓ version $VERSION looks like semver"
 
-# 2. working tree clean. Untracked-but-ignored files are fine; uncommitted
-# tracked changes are not. `--porcelain` lists every dirty / untracked entry
-# one per line — any output means dirty.
-if ! git diff --quiet HEAD -- 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; then
-    echo "❌  Working tree has uncommitted changes. Commit or stash before releasing." >&2
-    git status --short
-    exit 1
+# 2. working tree clean — UNLESS the user opted into --include-pending, in
+# which case we allow a dirty workdir and fold those changes into the
+# release commit further down. Untracked-but-ignored files are fine in
+# both modes; uncommitted tracked changes are only OK with -p.
+if [[ $INCLUDE_PENDING -eq 1 ]]; then
+    echo "    ⚠ clean-tree check skipped (-p): pending changes will be folded into the release commit"
+else
+    if ! git diff --quiet HEAD -- 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; then
+        echo "❌  Working tree has uncommitted changes. Commit, stash, or re-run with -p / --include-pending." >&2
+        git status --short
+        exit 1
+    fi
+    echo "    ✓ working tree clean"
 fi
-echo "    ✓ working tree clean"
 
 # 3. must be on a real branch — releasing from a detached HEAD means the
 # bump commit would be orphaned and lost.
@@ -174,17 +186,47 @@ sed -i '' -E "s/(MARKETING_VERSION = )[^;]+;/\\1${NEW_MARKETING};/g" "$PBXPROJ"
 sed -i '' -E "s/(CURRENT_PROJECT_VERSION = )[^;]+;/\\1${NEW_BUILD};/g" "$PBXPROJ"
 
 # Sanity-check that sed actually changed something. If the regex missed
-# (project layout changed), bail before committing the no-op.
-if ! git diff --quiet -- "$PBXPROJ"; then
-    git add "$PBXPROJ"
-    git commit -m "chore: bump version to $NEW_MARKETING (build $NEW_BUILD)" >/dev/null
-    echo "    ✓ committed bump as $(git rev-parse --short HEAD)"
-    git push origin "$BRANCH"
-    echo "    ✓ pushed $BRANCH to origin"
-else
+# (project layout changed), bail before committing the no-op. We allow
+# the bump to be a no-op only when -p is in play, because the user might
+# legitimately have already bumped pbxproj manually and only wants to fold
+# their other pending changes into the release commit.
+if git diff --quiet -- "$PBXPROJ" && [[ $INCLUDE_PENDING -eq 0 ]]; then
     echo "❌  sed didn't change $PBXPROJ — version pattern may have moved. Bump aborted." >&2
     exit 1
 fi
+
+if [[ $INCLUDE_PENDING -eq 1 ]]; then
+    # Single combined commit: bump + everything else in the workdir. Show
+    # the user exactly what's about to be committed first — otherwise it's
+    # too easy to release stray scratch files.
+    echo ""
+    echo "    Pending changes that will go into the release commit:"
+    git -c color.status=always status --short | sed 's/^/      /'
+    echo ""
+
+    if [[ $ASSUME_YES -ne 1 ]]; then
+        read -r -p "Commit all of the above as 'Release $VERSION'? [Y/n] " ans
+        case "${ans:-Y}" in
+            n|N|no|NO)
+                echo "Aborted by user. Note: pbxproj has been edited (bump applied); revert with \`git checkout -- $PBXPROJ\` if you don't want it."
+                exit 1
+                ;;
+        esac
+    fi
+
+    git add -A
+    git commit -m "Release $VERSION" >/dev/null
+    echo "    ✓ committed release as $(git rev-parse --short HEAD)"
+else
+    # Default: bump-only commit. The user committed their features in a
+    # separate, earlier commit; this one is purely the version bump.
+    git add "$PBXPROJ"
+    git commit -m "chore: bump version to $NEW_MARKETING (build $NEW_BUILD)" >/dev/null
+    echo "    ✓ committed bump as $(git rev-parse --short HEAD)"
+fi
+
+git push origin "$BRANCH"
+echo "    ✓ pushed $BRANCH to origin"
 
 echo ""
 

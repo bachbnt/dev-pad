@@ -55,6 +55,15 @@ final class DropShelfMonitor {
     /// cancelled drag (where the popup should STAY visible).
     private var isInternalDragInProgress: Bool = false
 
+    /// True between detecting a real external file drag (in `handleDrag`)
+    /// and the matching `mouseUp`. The flag is what lets `handleMouseUp`
+    /// distinguish "a drag just ended outside the panel — dismiss" from
+    /// "the user just clicked somewhere in Finder to change folders".
+    /// Without it, every stray click outside the panel would hide it,
+    /// and the user couldn't navigate Finder to a drop destination while
+    /// the popup is visible.
+    private var externalDragInFlight: Bool = false
+
     private init() {}
 
     // MARK: - Public
@@ -153,6 +162,13 @@ final class DropShelfMonitor {
         lastDragChangeCount = count
         guard pasteboardContainsFileURLs(pb) else { return }
 
+        // A real file drag just started somewhere in the system. Arm the
+        // flag so `handleMouseUp` knows the next mouseUp ends a drag (and
+        // can decide whether to auto-dismiss based on where it lands).
+        // Plain clicks elsewhere never hit this branch, so the flag stays
+        // false for them and `handleMouseUp` leaves the panel alone.
+        externalDragInFlight = true
+
         // Already shown — nothing to schedule.
         if let panel, panel.isVisible { return }
         // Already pending — first scheduler wins.
@@ -183,16 +199,30 @@ final class DropShelfMonitor {
         pendingShowTask?.cancel()
         pendingShowTask = nil
 
+        // Whatever this mouseUp is — drag-end or plain click — it closes
+        // the current external-drag window. Snapshot the flag now and
+        // reset it for the next cycle.
+        let wasExternalDrag = externalDragInFlight
+        externalDragInFlight = false
+
         // Popup-initiated drags route through `onSessionEnd` instead,
         // which can tell a real delivery apart from a mid-drag cancel.
         // Don't second-guess it from here.
         guard !isInternalDragInProgress else { return }
 
-        // If the panel is visible but the mouse came up OUTSIDE of it,
-        // the user dropped the files somewhere else (Finder, another
-        // app, the desktop) — auto-dismiss so the popup doesn't linger.
-        // Drops INSIDE the panel keep it visible: the user is still
-        // collecting and may add more files in a moment.
+        // Plain click outside the panel — NOT the end of a drag. The
+        // user is likely clicking around Finder to navigate to a drop
+        // destination while keeping our popup as a holding pen. Leaving
+        // the popup visible is the whole point; bail out before the
+        // auto-dismiss check below.
+        guard wasExternalDrag else { return }
+
+        // A real external drag just ended. If the panel is visible and
+        // the mouse came up OUTSIDE of it, the user dropped the files
+        // somewhere else (Finder, another app, the desktop) —
+        // auto-dismiss so the popup doesn't linger. Drops INSIDE the
+        // panel keep it visible: the user may add more files in a
+        // moment.
         guard let panel, panel.isVisible else { return }
         let cursor = NSEvent.mouseLocation
         if !panel.frame.contains(cursor) {

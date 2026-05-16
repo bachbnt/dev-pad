@@ -90,18 +90,20 @@ The Release configuration is tuned for smallest binary: `SWIFT_OPTIMIZATION_LEVE
 `release.sh` wraps the whole "bump + build + tag + publish" flow into one command. It runs entirely on the local machine — no CI, no cost. Requires the [`gh` CLI](https://cli.github.com) authenticated once via `gh auth login`.
 
 ```bash
-./release.sh v1.0.0                          # ad-hoc signed
+./release.sh v1.0.0                          # ad-hoc signed; clean tree required
+./release.sh v1.0.0 -p                       # fold pending workdir changes into one release commit
 ./release.sh v1.0.0 --signed                 # use Xcode Developer ID
 ./release.sh v1.1.0-beta1 --prerelease       # mark as pre-release
 ./release.sh v1.0.0 --notes "Hotfix: …"      # supply notes instead of auto-generated
 ./release.sh v1.0.0 --draft                  # create as draft, finish on the web UI
 ./release.sh v1.2.0 --yes                    # skip the version-bump confirm prompt
+./release.sh v1.0.0 -p --yes                 # one-shot release of whatever's in the workdir
 ```
 
 Pre-flight checks (any failure aborts before building, so a botched call doesn't waste a 90-second Xcode build):
 
 - Version is semver `vX.Y.Z` (optionally `-suffix`).
-- Working tree is clean — no uncommitted changes.
+- Working tree is clean — no uncommitted changes. **Relaxed** when `-p` / `--include-pending` is passed; the script will commit your pending changes as part of the release.
 - Currently on a real branch (not detached HEAD).
 - Tag doesn't already exist locally or on `origin`.
 - `gh` CLI is installed and authenticated.
@@ -114,6 +116,15 @@ If those pass, the script then:
 4. **Creates the GitHub release** with `gh release create`, attaching the DMG. Release notes are auto-generated from PRs / commits since the previous tag unless you pass `--notes`.
 
 The attached DMG is always reachable at the stable [`releases/latest/download/DevPad.dmg`](https://github.com/bachbnt/dev-pad/releases/latest/download/DevPad.dmg) URL, so the README link doesn't need updating between releases.
+
+**Commit shape:**
+
+| Mode | Commits per release | Commit message |
+|------|--------------------|----------------|
+| Default (clean tree required) | 1 — just the version bump (your feature commits stay separate, made before running the script) | `chore: bump version to X.Y.Z (build N)` |
+| With `-p` / `--include-pending` | 1 — bump + every pending workdir change folded together | `Release vX.Y.Z` |
+
+With `-p`, the script prints `git status` before committing so you can see exactly which files are about to ship — confirm prompt blocks (unless `--yes`). Recommended when you don't want a separate "bump" commit cluttering history. Skip `-p` when you want the bump revertable independently of your feature commits.
 
 ### Demo mode (Debug builds only)
 
@@ -313,7 +324,7 @@ DevPad/
 - **Hash** — mix of CryptoKit and CommonCrypto, no third-party deps. CryptoKit covers MD5 / SHA-1 (via `Insecure`) and SHA-256 / SHA-384 / SHA-512 (top-level types). MD2, MD4, and SHA-224 don't have CryptoKit counterparts, so DevPad calls the C symbols from `CommonCrypto` (`CC_MD2` / `CC_MD4` / `CC_SHA224` for one-shot, `CC_xxx_Init` / `_Update` / `_Final` for file streaming). Apple has marked MD2 / MD4 as deprecated in their SDK; to avoid noisy build warnings DevPad re-imports those four C symbols via `@_silgen_name` aliases that strip the deprecation attribute. Text and HMAC modes hash synchronously on the main thread (input is small enough — under a microsecond per algorithm) and only run when the user presses **Hash** / **Generate** or `⌘↵`. File mode is auto-triggered on drop / choose because that gesture is itself the explicit action; it opens a `FileHandle`, reads 1 MB chunks, feeds each into the hash's `update(data:)` (or `CC_xxx_Update`), then `finalize()`s — bounded memory regardless of file size. Each algorithm runs sequentially on a detached `Task`, with the UI receiving incremental updates via `MainActor.run`. The "Compare with" check trims whitespace and strips `:` / `-` so a hash copied from `shasum`, a changelog, or a GitHub release artifact all match the same digest. HMAC reuses CryptoKit's `HMAC<H>` (constant-time by construction) with `Insecure.SHA1` for HMAC-SHA1 and the modern types for SHA-256/384/512.
 - **Pure Paste** — when toggled on, `ClipboardManager` inspects the system pasteboard each tick. If the clipboard advertises any rich-text representation (`.rtf`, `.rtfd`, `.html`, `WebArchivePboardType`, …) alongside the plain string, the manager overwrites the pasteboard with just the plain text and records the plain version in history. A `suppressNextChange` flag prevents the rewrite from being re-processed as a brand-new clipboard event.
 - **Drop Shelf detection** — an `NSEvent` global monitor watches `.leftMouseDragged` events from other apps and inspects `NSPasteboard(.drag).changeCount`. The count only advances when a real drag-and-drop session starts, so plain mouse drags over empty space are ignored. The panel appears after a short delay (≈1 s) so quick accidental drags don't flash it.
-- **Drop Shelf auto-dismiss** — on mouse-up, the monitor compares the cursor's screen point against the visible panel's frame: if the drop landed outside, the popup is dismissed; if it landed inside, the popup stays so the user can keep accumulating. Popup-initiated drags use a separate path — `MultiFileDragSource`'s `onSessionEnd` callback (with the drop's screen point + `NSDragOperation`) decides whether the drop was a real delivery, a drop back into the popup, or a cancel, and clears state + dismisses accordingly. A short-lived flag on `DropShelfMonitor` prevents the global mouse-up handler from racing with the drag-source callback.
+- **Drop Shelf auto-dismiss** — the monitor only auto-dismisses on mouse-up if a real external file drag was in flight (`handleDrag` saw the drag-pasteboard changeCount move and confirmed file URLs). A plain click outside the panel is deliberately ignored — otherwise the user couldn't click around Finder to navigate to a drop destination while the popup is up. When a drag did happen, the monitor compares the cursor's screen point against the visible panel's frame: if the drop landed outside, the popup is dismissed; if it landed inside, the popup stays so the user can keep accumulating. Popup-initiated drags use a separate path — `MultiFileDragSource`'s `onSessionEnd` callback (with the drop's screen point + `NSDragOperation`) decides whether the drop was a real delivery, a drop back into the popup, or a cancel, and clears state + dismisses accordingly. A short-lived flag on `DropShelfMonitor` prevents the global mouse-up handler from racing with the drag-source callback.
 - **Multi-file drag-out** — SwiftUI's `.onDrag` returns a single `NSItemProvider`, which can't represent a set of files. `MultiFileDragSource` wraps the dragged content in an `NSView` that conforms to `NSDraggingSource` and starts a session with one `NSDraggingItem` per URL. Finder treats them as a single multi-file drop. Every drag source in the codebase (popup stack, in-app stack handle, in-app per-row, menu-bar stack handle, menu-bar per-row) wires the same `onSessionEnd` cleanup, so a successful drop from any surface removes the delivered URLs from the shared `DropShelfManager`.
 - **Floating shelf window** — the popup is an `NSPanel` with `.nonactivatingPanel + .borderless` styling, pinned to `.floating` level next to the cursor. It never steals focus from the ongoing drag. The file-stack view opts out of window-movement (`mouseDownCanMoveWindow = false`) so dragging it drags files, not the panel.
 - **Shared Drop Shelf state** — `DropShelfManager.shared` (the URL list) and `AppSettings.shared.dropShelfEnabled` (the toggle) are the single source of truth. The floating popup, the main-window sidebar tab, and the menu-bar Drop Shelf tab all observe the same singletons, so adding / removing a file in any surface is reflected everywhere immediately.
