@@ -230,7 +230,7 @@ fi
 gh release create "$VERSION" "$DMG_PATH" \
     --title "DevPad $VERSION" \
     "${NOTES_FLAG[@]}" \
-    "${RELEASE_FLAGS[@]}"
+    ${RELEASE_FLAGS[@]+"${RELEASE_FLAGS[@]}"}
 
 echo ""
 echo "🎉  Release $VERSION published."
