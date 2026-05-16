@@ -8,7 +8,7 @@ A native macOS developer utility — format JSON / XML / SQL, parse URLs, genera
 
 ## Download
 
-Grab the latest pre-built disk image from the GitHub Releases page: **[DevPad.dmg](https://github.com/bachbnt/dev-pad/releases/latest/download/DevPad.dmg)** (~6 MB). This link always points to the most recent release — no need to update the README on every release.
+Grab the latest pre-built disk image from the GitHub Releases page: **[DevPad.dmg](https://github.com/bachbnt/dev-pad/releases/latest/download/DevPad.dmg)** (~3 MB). This link always points to the most recent release — no need to update the README on every release.
 
 1. Double-click the downloaded `DevPad.dmg`.
 2. Drag `DevPad.app` into the `Applications` shortcut shown in the mounted volume.
