@@ -1,6 +1,11 @@
 ---
 name: devpad-add-tool
-description: Use when adding a new tool/tab to the DevPad sidebar (e.g. "thêm tính năng X", "add a YAML formatter", "make a new tab for …"). Step-by-step recipe covering every file that must change: utility, view, Tool enum wiring, localization (EN + VI), DemoMode sample, project.pbxproj registration (4 places per file), and README updates. Use together with devpad-overview and devpad-conventions.
+description: >-
+  Use when adding a new tool/tab to the DevPad sidebar (e.g. "thêm tính năng X",
+  "add a YAML formatter", "make a new tab for …"). Step-by-step recipe covering
+  every file that must change: utility, view, Tool enum wiring, localization
+  (EN + VI), DemoMode sample, project.pbxproj registration (4 places per file),
+  and README updates. Use together with devpad-overview and devpad-conventions.
 ---
 
 # Adding a new sidebar tool to DevPad

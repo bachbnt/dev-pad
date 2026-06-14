@@ -43,7 +43,7 @@ DevPad/
 ├── docs/screenshots/                # README screenshots
 ├── build_dmg.sh                     # Release build + DMG packaging
 ├── LICENSE, README.md
-└── skills/ (or .claude/skills/)     # ← these skills
+└── .ai/skills/                      # Shared instructions for AI coding agents
 ```
 
 ## Three scenes (`DevPadApp.swift`)

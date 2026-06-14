@@ -1,6 +1,11 @@
 ---
 name: devpad-macos-gotchas
-description: Use whenever DevPad code does anything with AVFoundation, AppKit layer-hosting, SwiftUI on macOS 13, Swift concurrency across actors, NSPasteboard / drag-and-drop, CommonCrypto, or CryptoKit. Catalogues the specific gotchas this codebase has already paid for — with the symptom, the root cause, and the fix that's currently in the tree. Cross-reference this every time you touch the corresponding engine: it'll save you the second crash.
+description: >-
+  Use whenever DevPad code does anything with AVFoundation, AppKit layer-hosting,
+  SwiftUI on macOS 13, Swift concurrency across actors, NSPasteboard,
+  drag-and-drop, CommonCrypto, or CryptoKit. Catalogues the specific gotchas this
+  codebase has already encountered, with the symptom, root cause, and current fix.
+  Cross-reference it whenever touching the corresponding engine.
 ---
 
 # DevPad — macOS / SwiftUI gotchas we've already hit

@@ -1,6 +1,12 @@
 ---
 name: devpad-conventions
-description: Use when writing or modifying any Swift file in the DevPad codebase, or when changing user-visible features. Covers the UI vocabulary every tab shares (mode picker, action bar, empty state, error banner, drop zone, output preview), the localization rules (EN+VI mirror, English engine errors, `settings.t(...)` everywhere), Swift code style (`@MainActor` singletons, `@StateObject` ownership, comment style, the mandatory `// DevPad — Copyright © <year> bachbnt. Proprietary.` header on every Swift file), the threading rules (`DispatchQueue.main.async` not `Task { @MainActor }`, `[weak self]` always when crossing actor boundaries), and the README-sync rule (any user-visible behavior change must also update README.md in the same change). Reach for this alongside devpad-add-tool when implementing new UI, and alongside devpad-review when checking existing code.
+description: >-
+  Use when writing or modifying any Swift file in the DevPad codebase, or when
+  changing user-visible features. Covers the shared UI vocabulary, EN/VI
+  localization rules, English engine errors, settings.t(...) usage, Swift code
+  style, the mandatory current-year copyright header, state ownership, threading
+  rules, and the README-sync rule. Use alongside devpad-add-tool for new UI and
+  alongside devpad-review when checking existing code.
 ---
 
 # DevPad code & UI conventions

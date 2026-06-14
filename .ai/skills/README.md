@@ -1,16 +1,17 @@
-# DevPad — Claude skills
+# DevPad — shared AI skills
 
-This folder contains six skills that document the DevPad codebase's conventions, architecture, and gotchas in enough detail that Claude (or a new human contributor) can work on this project without re-discovering the painful lessons.
+This folder is the canonical source of DevPad project knowledge for AI coding agents and human contributors. The six skills document the codebase's conventions, architecture, workflows, and known platform gotchas.
 
-## How to install
+## How agents use these skills
 
-Move (or copy) the contents of this folder into `.claude/skills/` at the repo root:
+Repository-level agent files route into this shared directory:
 
-```bash
-mv skills/devpad-* .claude/skills/
-```
+- `AGENTS.md` is an independent entry point for coding agents.
+- `CLAUDE.md` is an independent entry point for Claude.
+- Both files route directly to the same skills and do not reference each other.
+- Skills remain under `.ai/skills/`; do not copy them into tool-specific directories.
 
-Claude will auto-discover them. Each skill's `description` field declares when it should fire — Claude reads them lazily.
+Agents should read `devpad-overview` first, then load only the task-specific skills named by their repository-level entry point. Each skill's `description` field also states when it applies.
 
 ## The six skills
 
@@ -33,7 +34,7 @@ Claude will auto-discover them. Each skill's `description` field declares when i
 
 ## Why six skills instead of one big doc?
 
-Each skill stays focused so Claude only loads what's relevant. A regex-engine review doesn't need the DMG packaging notes; an architecture overview shouldn't bury the AVFoundation gotchas. The Skill tool's `description` field acts as a router — keep them tight and Claude will pick the right one without re-reading everything.
+Each skill stays focused so agents only load what's relevant. A regex-engine review doesn't need the DMG packaging notes; an architecture overview shouldn't bury the AVFoundation gotchas. The skill `description` field acts as a router, so keep it specific and concise.
 
 ## Updating the skills
 
@@ -41,4 +42,4 @@ When you discover a new gotcha worth remembering:
 - Same category as an existing skill → append it there (especially `devpad-macos-gotchas`, which is meant to grow).
 - New category that doesn't fit → add a new skill folder following the same pattern.
 
-Keep the `description` field one or two sentences of plain English that names every trigger phrase. That's what determines whether Claude reaches for the skill.
+Keep the `description` field concise and name the tasks, files, or technologies that should trigger the skill. Update both `AGENTS.md` and `CLAUDE.md` when adding or renaming a skill.
