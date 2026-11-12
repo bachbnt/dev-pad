@@ -61,7 +61,7 @@ The keys-only-in-one-language report catches stale entries. The referenced-but-m
 
 Note: keys accessed dynamically (via `<Type>.labelKey` constants, `FlagOption.titleKey`, enum `.rawValue`-based lookups) won't appear in `referenced` — the audit's blind spot. Spot-check those when adding new dynamic keys.
 
-### pbxproj sanity — every registered Swift file in 4 places?
+### pbxproj sanity — every Swift file registered in all four places?
 
 ```bash
 python3 - <<'PY'
@@ -71,12 +71,16 @@ issues = []
 for p in glob.glob('DevPad/**/*.swift', recursive=True):
     name = p.split('/')[-1]
     count = pbx.count(name)
-    if count != 4:
+    # The filename appears 6x for a normal file: BuildFile (2: comment + fileRef
+    # comment) + FileReference (2: comment + path) + group (1) + Sources phase (1).
+    # Engine files the DevPadTests target compiles directly add a second
+    # BuildFile + Sources entry (+3) -> 9.
+    if count not in (6, 9):
         issues.append((name, count))
 if issues:
-    for n, c in issues: print(f"WRONG COUNT {n}: {c} (expect 4: BuildFile + FileReference + group + Sources phase)")
+    for n, c in issues: print(f"WRONG COUNT {n}: {c} (expect 6, or 9 if also compiled into DevPadTests: BuildFile + FileReference + group + Sources phase)")
 else:
-    print("All Swift files registered in 4 places ✓")
+    print("All Swift files registered in 4 places ✓ (6 or 9 name occurrences)")
 PY
 ```
 
@@ -187,7 +191,7 @@ These are the recurring mistakes — eyeball every diff for them:
 2. **VI key forgotten**: PR adds 8 new EN keys but only 7 in VI. Audit script catches.
 3. **`Task { @MainActor }` accidentally introduced**: usually copy-pasted from another file that had it before we removed the pattern. Grep for `Task { @MainActor` in any file modifying `DevPad/Utilities/`.
 4. **`.foregroundStyle(.accentColor)`**: macOS 13 compile error. Should be `Color.accentColor`.
-5. **`pbxproj` file appears 3× instead of 4×**: usually missing from `PBXSourcesBuildPhase.files` — the linker will still compile but won't include the file in the binary. App launches without the new feature.
+5. **`pbxproj` file appears 5× instead of 6×**: usually missing from `PBXSourcesBuildPhase.files` — the linker will still compile but won't include the file in the binary. App launches without the new feature.
 6. **`AVFoundation` delegate not cleared in `deinit`**: silent EXC_BAD_ACCESS waiting to happen on the next teardown.
 7. **`.frame(maxHeight: .infinity)` missing on a column-mode tab**: content collapses vertically, mode picker ends up centered in the screen. Fix is `.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)` at the VStack level.
 8. **`Color.primary` swapped for `.primary`**: usually fine but in certain contexts (ternary with `Color.accentColor`) the type inference complains.

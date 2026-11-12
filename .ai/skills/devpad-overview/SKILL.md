@@ -27,6 +27,7 @@ DevPad/
 │   │   ├── Hashing.swift             (CryptoKit + CommonCrypto, 8 algos + HMAC)
 │   │   ├── DiffEngine.swift          (LCS line + word + hunk grouping)
 │   │   ├── ClipboardManager.swift    (Timer + changeCount + Pure Paste)
+│   │   ├── ClipboardStore.swift      (history on disk: JSON in UserDefaults + image files)
 │   │   ├── DropShelfManager.swift, DropShelfMonitor.swift
 │   │   ├── DemoMode.swift            (--demo-fill seeding, #if DEBUG only)
 │   │   └── Localization.swift        (EN + VI in-memory dicts)
@@ -40,6 +41,7 @@ DevPad/
 │   ├── Assets.xcassets/
 │   ├── DevPad.entitlements          # app-sandbox + device.camera
 │   └── Preview Content/
+├── DevPadTests/                     # XCTest bundle — engine sources compiled straight in
 ├── docs/screenshots/                # README screenshots
 ├── build_dmg.sh                     # Release build + DMG packaging
 ├── LICENSE, README.md
@@ -61,7 +63,7 @@ All accessed via `.shared`, live for the duration of the app, observed via `@Env
 | Singleton | Owns | Used by |
 |---|---|---|
 | `AppSettings.shared` | theme, language, dropShelfEnabled, purePasteEnabled, pendingTool; `t(key)` localization lookup | every view that renders text |
-| `ClipboardManager.shared` | clipboard history (Codable → UserDefaults), polling Timer, Pure Paste rewrite | ClipboardHistoryView, ClipboardMenuBarView, DemoMode |
+| `ClipboardManager.shared` | clipboard history (persisted via `ClipboardStore`; ordering/dedup/privacy rules in `ClipboardHistory`), adaptive polling Timer, Pure Paste rewrite | ClipboardHistoryView, ClipboardMenuBarView, DemoMode |
 | `DropShelfManager.shared` | shared URL list across popup / sidebar tab / menubar tab | DropShelfPanelView, DropShelfView, ClipboardMenuBarView, DropShelfMonitor |
 | `DropShelfMonitor.shared` | global mouse + drag-pasteboard observer, NSPanel lifecycle | enabled/disabled from AppSettings.dropShelfEnabled |
 
@@ -114,7 +116,21 @@ Tools with multiple sub-modes (JWT decode/sign, QR generate/scan, regex match/re
 Text("\(settings.t("xxx.error.prefix")): \(error.localizedDescription)")
 ```
 
-This split lets engines be unit-tested standalone (none yet, but the option's there).
+This split lets engines be unit-tested standalone. `DevPadTests/` does exactly that: the target compiles the engine files directly (no `@testable import`, no host app), so tests never launch DevPad or touch the real pasteboard. Run them with:
+
+```bash
+xcodebuild -project DevPad.xcodeproj -scheme DevPad -configuration Debug test
+```
+
+When you add logic to an engine, add a test; when a manager needs testing, pull the rules into a pure type (see `ClipboardHistory` in `Models/ClipboardItem.swift`) instead of testing through `NSPasteboard`. A file used by the tests must stay free of SwiftUI and `@MainActor`.
+
+## Tool tabs stay mounted
+
+`MainWindowView` instantiates a tool the first time it's selected and keeps it alive afterwards (hidden with `opacity(0)` + `.disabled`), so typed input survives tab switches. Consequences for tool views:
+
+- `onAppear` runs once per session, not on every visit.
+- `onDisappear` does **not** fire on a tab switch. Anything that holds hardware or a long-running resource must read `@Environment(\.isToolActive)` and release it when it turns false (`QRGeneratorView` does this for the camera).
+- Hidden tabs are disabled, which is what stops their `⌘↵` shortcuts from competing with the visible tool's.
 
 ## Localization (`Utilities/Localization.swift`)
 
