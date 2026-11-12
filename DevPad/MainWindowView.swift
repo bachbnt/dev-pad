@@ -76,7 +76,7 @@ private enum Tool: String, CaseIterable, Identifiable, Hashable {
         case .jwt:       return "key"
         case .regex:     return "asterisk"
         case .hash:      return "number"
-        case .encode:    return "textformat.abc"
+        case .encode:    return "arrow.2.squarepath"
         case .uuid:      return "dice"
         case .timestamp: return "clock"
         case .ports:     return "network"

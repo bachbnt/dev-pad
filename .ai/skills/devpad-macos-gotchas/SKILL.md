@@ -278,3 +278,11 @@ Reference: `configureSession()` in `QRCamera.swift`.
 **Cause**: `URL(string:)` happily parses `WIFI:T:WPA;…` as a URL with scheme `wifi`, so `URL(string: payload)?.scheme != nil` is true for any `word:…` payload.
 
 **Fix**: Decide the payload kind first (`QRPayload.classify`) and only offer Open for plain text. A menu-style `Picker` inside a `Grid` cell also centres itself in a wide column: give it `.frame(maxWidth: .infinity, alignment: .leading)` so it lines up with the text fields below. Reference: `QRGeneratorView.swift`.
+
+## 22. Offscreen window capture: vibrancy and glass render wrong, and demo runs touch real data
+
+**Symptom**: A window rendered with `cacheDisplay` shows the selected sidebar row as a solid black pill (label and icon lost) and the Liquid Glass sidebar-toggle as an empty circle. `layer.render(in:)` is worse (wrong scale, missing content), `CGWindowListCreateImage` is unavailable in current SDKs, and ScreenCaptureKit may raise a permission prompt.
+
+**Cause**: Vibrant / glass effect views need the window server's backdrop, which an offscreen draw doesn't have.
+
+**Fix**: `DemoMode.captureScreenshotIfRequested` (Debug only) captures twice — once as is, once with another tool selected — and recolours the black pill from the second capture (dark glyphs on a light row → white glyphs on the accent colour), then draws the `sidebar.left` glyph into the glass platter. Measure the pill along its middle line only, or black text in the detail pane stretches it. A Debug build shares the installed app's sandbox container (same bundle id), so a screenshot run would show the real clipboard history and write demo values into real settings: build it with `PRODUCT_BUNDLE_IDENTIFIER=com.bachbnt.DevPad.shots` and run that.

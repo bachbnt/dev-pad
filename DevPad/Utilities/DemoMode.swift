@@ -67,7 +67,7 @@ enum DemoMode {
       "user": {
         "id": 42,
         "name": "bachbnt",
-        "email": "[email protected]",
+        "email": "dev@example.com",
         "roles": ["admin", "editor"],
         "active": true
       },
@@ -124,9 +124,9 @@ enum DemoMode {
     static let sampleRegexFlags: RegexFlags = [.caseInsensitive, .multiline]
 
     static let sampleRegexText: String = """
-    Please reach out to [email protected] for product feedback.
-    For billing issues, write to [email protected] or [email protected].
-    Old contact (deprecated): [email protected]
+    Please reach out to feedback@example.com for product feedback.
+    For billing issues, write to billing@example.com or finance@example.org.
+    Old contact (deprecated): old.support@example.net
     """
 
     /// Plain text seed for the Hash Generator demo. Picked to be long
@@ -215,7 +215,7 @@ enum DemoMode {
         return false
     }
 
-    let success = login(email: "[email protected]", password: pwd)
+    let success = login(email: "dev@example.com", password: pwd)
     print("Logged in: \\(success)")
     """
 
@@ -232,7 +232,7 @@ enum DemoMode {
         return false
     }
 
-    let success = login(email: "[email protected]", password: pwd)
+    let success = login(email: "dev@example.com", password: pwd)
     print("Logged in: \\(success)")
     """
 
@@ -268,7 +268,7 @@ enum DemoMode {
             ),
             ClipboardItem(
                 kind: .text,
-                text: "[email protected]",
+                text: "dev@example.com",
                 createdAt: Date().addingTimeInterval(-60 * 40)
             ),
             ClipboardItem(
@@ -306,3 +306,222 @@ enum DemoMode {
         }
     }
 }
+
+// MARK: - Self-screenshot (Debug builds only)
+
+#if DEBUG
+extension DemoMode {
+
+    /// `--demo-screenshot=<name>.png [--demo-tool=<slug>]` — once the main
+    /// window is up and the demo data is in, opens the given tool, renders the
+    /// window itself (title bar, traffic lights and all) onto a transparent
+    /// canvas with a soft shadow, like a ⇧⌘4-then-Space capture, writes the
+    /// PNG and quits. The window draws itself, so no Screen Recording
+    /// permission is needed. The App Sandbox only lets us write inside the
+    /// container, so the file lands in `NSTemporaryDirectory()`; the full path
+    /// is printed.
+    @MainActor
+    static func captureScreenshotIfRequested() {
+        let args = ProcessInfo.processInfo.arguments
+        func value(_ prefix: String) -> String? {
+            args.first { $0.hasPrefix(prefix) }.map { String($0.dropFirst(prefix.count)) }
+        }
+        guard let name = value("--demo-screenshot=") else { return }
+        let tool = value("--demo-tool=")
+        // The demo shelf files only show while the shelf is switched on. Scoped to
+        // this tool so an ordinary --demo-fill run never flips a persisted setting.
+        if tool == "dropshelf" { AppSettings.shared.dropShelfEnabled = true }
+
+        // Fixed delays rather than polling: SwiftUI gives no "layout finished"
+        // signal, and the demo data is applied in `onAppear`.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            if let tool { AppSettings.shared.pendingTool = tool }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                let path = (NSTemporaryDirectory() as NSString).appendingPathComponent((name as NSString).lastPathComponent)
+                let ok = writeWindowScreenshot(to: path, tool: tool)
+                print(ok ? "demo-screenshot: \(path)" : "demo-screenshot: FAILED")
+                NSApp.terminate(nil)
+            }
+        }
+    }
+
+    @MainActor
+    private static func renderWindow(_ frameView: NSView, scale: Int) -> NSBitmapImageRep? {
+        let size = frameView.bounds.size
+        guard let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(size.width) * scale,
+                                         pixelsHigh: Int(size.height) * scale, bitsPerSample: 8, samplesPerPixel: 4,
+                                         hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB,
+                                         bytesPerRow: 0, bitsPerPixel: 0) else { return nil }
+        rep.size = size
+        frameView.cacheDisplay(in: frameView.bounds, to: rep)
+        return rep
+    }
+
+    /// `cacheDisplay` can't draw the vibrant selected row of the sidebar: it
+    /// comes out solid black, label and icon included. `other` is a second
+    /// capture with a different tool selected, where that row is drawn
+    /// normally (dark glyphs on a light row). Its darkness becomes the white
+    /// of the glyphs on an accent-coloured pill, which is how the selected
+    /// row really looks.
+    private static func repairSelectedSidebarRow(in shot: NSBitmapImageRep, using other: NSBitmapImageRep, accent: NSColor) {
+        guard let pa = shot.bitmapData, let pb = other.bitmapData,
+              shot.pixelsWide == other.pixelsWide, shot.pixelsHigh == other.pixelsHigh,
+              shot.bytesPerRow == other.bytesPerRow else { return }
+        let w = shot.pixelsWide, h = shot.pixelsHigh, stride = shot.bytesPerRow, bpp = shot.bitsPerPixel / 8
+        let sidebarWidth = w * 4 / 10
+
+        func isBlack(_ x: Int, _ y: Int) -> Bool {
+            let o = y * stride + x * bpp
+            return pa[o] < 14 && pa[o + 1] < 14 && pa[o + 2] < 14 && pa[o + 3] > 200
+        }
+        var top = -1, bottom = -1
+        for y in 0..<h {
+            var count = 0
+            for x in 0..<sidebarWidth where isBlack(x, y) { count += 1 }
+            if count > 250 {                      // a full-width pill row, not a line of text
+                if top < 0 { top = y }
+                bottom = y
+            }
+        }
+        guard top >= 0 else { return }
+        // Measure the pill along its middle line only, as one run of black: the
+        // rows above and below can touch black text in the detail pane.
+        let middle = (top + bottom) / 2
+        var left = -1, right = -1, gap = 0
+        for x in 0..<sidebarWidth {
+            if isBlack(x, middle) {
+                if left < 0 { left = x }
+                right = x
+                gap = 0
+            } else if left >= 0 {
+                gap += 1
+                if gap > 6 { break }
+            }
+        }
+        guard left >= 0, right - left > 100 else { return }
+
+        func luminance(_ o: Int) -> Double {
+            0.299 * Double(pb[o]) + 0.587 * Double(pb[o + 1]) + 0.114 * Double(pb[o + 2])
+        }
+        var light = 0.0, dark = 255.0
+        for y in top...bottom {
+            for x in left...right {
+                let l = luminance(y * stride + x * bpp)
+                light = max(light, l); dark = min(dark, l)
+            }
+        }
+        guard light - dark > 20, let c = accent.usingColorSpace(.sRGB) else { return }
+        let blue = (r: c.redComponent * 255, g: c.greenComponent * 255, b: c.blueComponent * 255)
+        let radius = 14.0
+
+        for y in top...bottom {
+            for x in left...right {
+                // Rounded-rectangle test, so the corners keep what was drawn there.
+                let dx = max(Double(left) + radius - Double(x), Double(x) - (Double(right) - radius), 0)
+                let dy = max(Double(top) + radius - Double(y), Double(y) - (Double(bottom) - radius), 0)
+                if dx * dx + dy * dy > radius * radius { continue }
+                let t = min(max((light - luminance(y * stride + x * bpp)) / (light - dark), 0), 1)
+                let o = y * stride + x * bpp
+                pa[o]     = UInt8(blue.r * (1 - t) + 255 * t)
+                pa[o + 1] = UInt8(blue.g * (1 - t) + 255 * t)
+                pa[o + 2] = UInt8(blue.b * (1 - t) + 255 * t)
+                pa[o + 3] = 255
+            }
+        }
+    }
+
+    /// The sidebar toggle sits in a glass "platter" that renders as an empty
+    /// circle offscreen; draw its glyph into the spot where the platter is.
+    @MainActor
+    private static func drawToolbarGlyphs(on shot: NSBitmapImageRep, in frameView: NSView) {
+        var platters: [NSRect] = []
+        func walk(_ v: NSView) {
+            if String(describing: type(of: v)).contains("NSToolbarPlatterView"), v.bounds.width < 80 {
+                platters.append(v.convert(v.bounds, to: frameView))
+            }
+            v.subviews.forEach(walk)
+        }
+        walk(frameView)
+        guard !platters.isEmpty, let context = NSGraphicsContext(bitmapImageRep: shot),
+              let symbol = NSImage(systemSymbolName: "sidebar.left", accessibilityDescription: nil)?
+                .withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 15, weight: .regular)
+                    .applying(NSImage.SymbolConfiguration(paletteColors: [NSColor.secondaryLabelColor]))) else { return }
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = context
+        for platter in platters {
+            let glyph = symbol.size
+            symbol.draw(in: NSRect(x: platter.midX - glyph.width / 2, y: platter.midY - glyph.height / 2,
+                                   width: glyph.width, height: glyph.height))
+        }
+        NSGraphicsContext.restoreGraphicsState()
+    }
+
+    @MainActor
+    private static func writeWindowScreenshot(to path: String, tool: String?) -> Bool {
+        guard let window = NSApp.windows.first(where: { $0.isVisible && $0.styleMask.contains(.titled) && $0.frame.width > 800 }),
+              let frameView = window.contentView?.superview else { return false }
+        // The documented default size; a fresh container would otherwise open at the 900-pt minimum.
+        window.setContentSize(NSSize(width: 1100, height: 720))
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        RunLoop.main.run(until: Date().addingTimeInterval(0.8))
+
+        let size = frameView.bounds.size
+        let scale = 2
+        guard let shot = renderWindow(frameView, scale: scale) else { return false }
+
+        // Second pass: move the selection elsewhere so the first tool's row is drawn normally.
+        AppSettings.shared.pendingTool = (tool == "json" || tool == nil) ? "xml" : "json"
+        RunLoop.main.run(until: Date().addingTimeInterval(1.2))
+        if let other = renderWindow(frameView, scale: scale) {
+            repairSelectedSidebarRow(in: shot, using: other, accent: NSColor.controlAccentColor)
+        }
+        drawToolbarGlyphs(on: shot, in: frameView)
+
+        // Same proportions as the screenshots already in docs/screenshots: a
+        // 1574-px-wide canvas with the window inset by 56 px.
+        let canvasWidth: CGFloat = 1574, margin: CGFloat = 56
+        let windowWidth = canvasWidth - margin * 2
+        let windowHeight = size.height * windowWidth / size.width
+        let canvasHeight = Int(windowHeight + margin * 2 + 18)
+        guard let canvas = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(canvasWidth), pixelsHigh: canvasHeight,
+                                            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                                            colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0),
+              let context = NSGraphicsContext(bitmapImageRep: canvas) else { return false }
+
+        NSGraphicsContext.saveGraphicsState()
+        defer { NSGraphicsContext.restoreGraphicsState() }
+        NSGraphicsContext.current = context
+        context.imageInterpolation = .high
+
+        let rect = NSRect(x: margin, y: margin + 18, width: windowWidth, height: windowHeight)
+        let outline = NSBezierPath(roundedRect: rect, xRadius: 26, yRadius: 26)
+
+        context.saveGraphicsState()
+        let shadow = NSShadow()
+        shadow.shadowColor = NSColor.black.withAlphaComponent(0.32)
+        shadow.shadowBlurRadius = 34
+        shadow.shadowOffset = NSSize(width: 0, height: -16)
+        shadow.set()
+        NSColor.white.setFill()
+        outline.fill()
+        context.restoreGraphicsState()
+
+        context.saveGraphicsState()
+        outline.addClip()
+        NSImage(size: size, flipped: false) { _ in
+            shot.draw(in: NSRect(origin: .zero, size: size))
+            return true
+        }.draw(in: rect, from: .zero, operation: .sourceOver, fraction: 1.0)
+        context.restoreGraphicsState()
+
+        NSColor.black.withAlphaComponent(0.18).setStroke()
+        outline.lineWidth = 1
+        outline.stroke()
+
+        guard let png = canvas.representation(using: .png, properties: [:]) else { return false }
+        return (try? png.write(to: URL(fileURLWithPath: path))) != nil
+    }
+}
+#endif

@@ -38,6 +38,9 @@ struct DevPadApp: App {
                     // pre-load every tab with curated screenshot samples.
                     // No-op otherwise.
                     DemoMode.bootstrap()
+#if DEBUG
+                    DemoMode.captureScreenshotIfRequested()
+#endif
                 }
                 // Belt-and-suspenders: even if `AppSettings.dropShelfEnabled`'s
                 // didSet doesn't propagate the toggle (e.g. when the change

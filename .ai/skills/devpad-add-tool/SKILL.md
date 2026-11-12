@@ -198,7 +198,7 @@ If the tool uses a privacy-sensitive API:
 Edit `README.md`:
 1. **Tagline** (`A native macOS developer utility — …`) — add a comma-separated phrase for the new tool.
 2. **Features** bullet — describe modes, key features, what makes it useful.
-3. **Screenshots grid** — add an image cell `<img src="docs/screenshots/<slug>120526.png">`. You can leave the file missing — README falls back gracefully — and capture it later via demo mode.
+3. **Screenshots grid** — add an image cell `<img src="docs/screenshots/<slug>120526.png">`. You can leave the file missing — README falls back gracefully — and capture it later: a Debug build photographs its own window with `--demo-fill --demo-screenshot=<name>.png --demo-tool=<slug>` (see the README's *Capturing screenshots*; use a throw-away bundle id so real clipboard history never ends up in an image).
 4. **Sidebar table** in "Main window" section — add a row with the tab description.
 5. **Per-tool notes** section — explain non-obvious behaviour (algorithm choices, error handling, security limits).
 6. **Project structure tree** — add the new utility + view file.

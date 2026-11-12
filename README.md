@@ -24,15 +24,15 @@ Listed in the same order as the sidebar.
 
 | JSON Formatter | XML Formatter | SQL Formatter |
 |:-:|:-:|:-:|
-| <img src="docs/screenshots/json120526.png" alt="JSON Formatter" width="100%"> | <img src="docs/screenshots/xml120526.png" alt="XML Formatter" width="100%"> | <img src="docs/screenshots/sql120526.png" alt="SQL Formatter" width="100%"> |
+| <img src="docs/screenshots/json121126.png" alt="JSON Formatter" width="100%"> | <img src="docs/screenshots/xml121126.png" alt="XML Formatter" width="100%"> | <img src="docs/screenshots/sql121126.png" alt="SQL Formatter" width="100%"> |
 
 | URL Parser | QR Generator | JWT Inspector |
 |:-:|:-:|:-:|
-| <img src="docs/screenshots/url130526.png" alt="URL Parser" width="100%"> | <img src="docs/screenshots/qr120526.png" alt="QR Generator" width="100%"> | <img src="docs/screenshots/jwt130526.png" alt="JWT Inspector" width="100%"> |
+| <img src="docs/screenshots/url121126.png" alt="URL Parser" width="100%"> | <img src="docs/screenshots/qr121126.png" alt="QR Generator" width="100%"> | <img src="docs/screenshots/jwt121126.png" alt="JWT Inspector" width="100%"> |
 
 | Regex Tester | Hash Generator | Base64 & URL Encode |
 |:-:|:-:|:-:|
-| <img src="docs/screenshots/regex130526.png" alt="Regex Tester" width="100%"> | <img src="docs/screenshots/hash130526.png" alt="Hash Generator" width="100%"> | <img src="docs/screenshots/encode121126.png" alt="Base64 & URL Encode" width="100%"> |
+| <img src="docs/screenshots/regex121126.png" alt="Regex Tester" width="100%"> | <img src="docs/screenshots/hash121126.png" alt="Hash Generator" width="100%"> | <img src="docs/screenshots/encode121126.png" alt="Base64 & URL Encode" width="100%"> |
 
 | UUID / ULID | Timestamp Converter | Port Killer |
 |:-:|:-:|:-:|
@@ -40,11 +40,11 @@ Listed in the same order as the sidebar.
 
 | Diff Compare | Clipboard History | Drop Shelf |
 |:-:|:-:|:-:|
-| <img src="docs/screenshots/diff120526.png" alt="Diff Compare" width="100%"> | <img src="docs/screenshots/clipboard120526.png" alt="Clipboard History" width="100%"> | <img src="docs/screenshots/drop120526.png" alt="Drop Shelf" width="100%"> |
+| <img src="docs/screenshots/diff121126.png" alt="Diff Compare" width="100%"> | <img src="docs/screenshots/clipboard121126.png" alt="Clipboard History" width="100%"> | <img src="docs/screenshots/drop121126.png" alt="Drop Shelf" width="100%"> |
 
-| Settings | | |
-|:-:|:-:|:-:|
-| <img src="docs/screenshots/settings120526.png" alt="Settings" width="100%"> | | |
+| Settings |
+|:-:|
+| <img src="docs/screenshots/settings121126.png" alt="Settings" width="100%"> |
 
 ## Features
 
@@ -156,6 +156,20 @@ For maintainers who want to grab marketing screenshots quickly, launch a **Debug
 # or, after building Debug:
 DEVPAD_DEMO_FILL=1 open /path/to/Debug/DevPad.app
 ```
+
+#### Capturing screenshots
+
+A Debug build can photograph its own window — no Screen Recording or Accessibility permission needed, because the window draws itself:
+
+```bash
+DevPad.app/Contents/MacOS/DevPad --demo-fill --demo-screenshot=json.png --demo-tool=json
+# --demo-tool takes a sidebar slug: json xml sql url qr jwt regex hash encode uuid timestamp ports diff clipboard dropshelf settings
+# add --demo-qr=vietqr|wifi|vcard (and --demo-qr-scan) for the QR tab
+```
+
+It opens the tool, renders the main window onto a transparent canvas with a soft shadow (1574 px wide, the same proportions as the images in `docs/screenshots/`), writes the PNG and quits. Because Debug builds are sandboxed the file lands in the app container's temporary folder; the full path is printed. A few rendering gaps of offscreen capture (the vibrant selected sidebar row, the glass sidebar-toggle button) are repaired in code.
+
+**Run it with a throw-away bundle id** so it gets a fresh container: `xcodebuild … PRODUCT_BUNDLE_IDENTIFIER=com.bachbnt.DevPad.shots`. The Clipboard History tab otherwise shows *your real* clipboard history whenever it isn't empty (demo seeding only fills an empty store), and a plain Debug run would write demo values into the settings of your installed DevPad.
 
 Each tab only injects its sample if its own state is currently empty, so you can still type over the placeholders during a real session. Clipboard / Drop Shelf seeds are skipped when those stores already contain real data — DevPad won't ever overwrite your actual history.
 

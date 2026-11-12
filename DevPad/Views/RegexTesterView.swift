@@ -282,12 +282,16 @@ struct RegexTesterView: View {
     }
 
     private func matchRow(index: Int, match: RegexMatch) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        // One label column for the "#1" row and its "$name" rows. A fixed 36 pt
+        // fits "$1" but wraps "$user" / "$domain" onto two lines, so size it to
+        // the longest group name (callout monospaced is ~7.6 pt per character).
+        let labelWidth = max(36, CGFloat((match.groups.map { $0.name.count }.max() ?? 0) + 1) * 7.6 + 6)
+        return VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text("#\(index)")
                     .font(.system(.callout, design: .monospaced).weight(.semibold))
                     .foregroundStyle(.secondary)
-                    .frame(width: 36, alignment: .trailing)
+                    .frame(width: labelWidth, alignment: .trailing)
                 Text(match.text)
                     .font(.system(.body, design: .monospaced))
                     .textSelection(.enabled)
@@ -313,7 +317,8 @@ struct RegexTesterView: View {
                     Text("$\(group.name)")
                         .font(.system(.callout, design: .monospaced))
                         .foregroundStyle(Color.accentColor)
-                        .frame(width: 36, alignment: .trailing)
+                        .lineLimit(1)
+                        .frame(width: labelWidth, alignment: .trailing)
                     if group.text.isEmpty, group.range == nil {
                         Text(settings.t("regex.group.empty"))
                             .font(.system(.body, design: .monospaced))

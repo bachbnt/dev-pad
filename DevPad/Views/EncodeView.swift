@@ -135,7 +135,7 @@ struct EncodeView: View {
 
     private var placeholder: some View {
         VStack(spacing: 12) {
-            Image(systemName: "textformat.abc")
+            Image(systemName: "arrow.2.squarepath")
                 .font(.system(size: 44, weight: .light))
                 .foregroundStyle(.secondary)
             Text(settings.t("encode.empty.title")).font(.headline)
