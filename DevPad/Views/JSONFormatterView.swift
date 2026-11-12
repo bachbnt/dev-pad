@@ -130,15 +130,16 @@ struct JSONFormatterView: View {
 
     private func format() {
         do {
+            // indent == 1 is the picker's "Tab" entry. Indenting with tabs in the
+            // formatter (not post-processing the output) keeps two consecutive
+            // spaces inside string values intact.
             let useTab = (indent == 1)
-            let formatted = try JSONFormatter.format(
+            text = try JSONFormatter.format(
                 text,
-                indent: useTab ? 2 : indent,
+                indent: indent,
+                useTabs: useTab,
                 sortKeys: false
             )
-            text = useTab
-                ? formatted.replacingOccurrences(of: "  ", with: "\t")
-                : formatted
             errorDetails = nil
         } catch {
             errorDetails = error.localizedDescription
