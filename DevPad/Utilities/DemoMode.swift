@@ -134,6 +134,58 @@ enum DemoMode {
     static let sampleHashText: String =
         "DevPad — a native macOS developer utility. Quick, local, no telemetry."
 
+    /// Text for the Base64 & URL Encode demo.
+    static let sampleEncodeText: String =
+        "DevPad: format, hash & decode — all offline."
+
+    /// Unix timestamp for the Timestamp Converter demo (2023-11-14 22:13:20 UTC).
+    static let sampleTimestamp: String = "1700000000"
+
+    /// Which QR content type the QR demo opens on: `--demo-qr=vietqr|wifi|vcard`
+    /// (or `DEVPAD_DEMO_QR`). Anything else keeps the plain-text sample.
+    static var qrKind: String? {
+#if DEBUG
+        if let arg = ProcessInfo.processInfo.arguments.first(where: { $0.hasPrefix("--demo-qr=") }) {
+            return String(arg.dropFirst("--demo-qr=".count))
+        }
+        return ProcessInfo.processInfo.environment["DEVPAD_DEMO_QR"]
+#else
+        return nil
+#endif
+    }
+
+    /// With `--demo-qr-scan`, the QR demo opens in Scan mode showing the
+    /// decoded sample payload instead of the generated image.
+    static var qrScan: Bool {
+#if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("--demo-qr-scan")
+#else
+        return false
+#endif
+    }
+
+    // Fake data for the QR demos — never a real account, network or person.
+    static let sampleVietQRBIN = "970436"
+    static let sampleVietQRAccount = "0123456789"
+    static let sampleVietQRAmount = "50000"
+    static let sampleVietQRMessage = "Thanh toan don hang 1024"
+    static let sampleWiFiSSID = "DevPad-Guest"
+    static let sampleWiFiPassword = "welcome-2026"
+    static let sampleCard = ContactCard(firstName: "An", lastName: "Nguyen", organization: "Example Co.",
+                                        title: "Engineering Manager", mobile: "+84 90 123 4567",
+                                        email: "an@example.com", website: "https://example.com")
+
+    /// Made-up listeners for the Port Killer demo. The real tab would show
+    /// the maintainer's actual processes in a public screenshot.
+    static let samplePorts: [ListeningPort] = [
+        ListeningPort(pid: 41872, processName: "node", port: 3000, addresses: ["::"]),
+        ListeningPort(pid: 40215, processName: "postgres", port: 5432, addresses: ["127.0.0.1", "::1"]),
+        ListeningPort(pid: 40388, processName: "redis-server", port: 6379, addresses: ["127.0.0.1"]),
+        ListeningPort(pid: 42101, processName: "Python", port: 8000, addresses: ["127.0.0.1"]),
+        ListeningPort(pid: 41990, processName: "java", port: 8080, addresses: ["::"]),
+        ListeningPort(pid: 40977, processName: "docker-proxy", port: 9200, addresses: ["0.0.0.0"])
+    ]
+
     /// HS256-signed JWT with a populated payload (iss/sub/aud/exp/iat/nbf/jti).
     /// `exp` is set to 2030-12-31 so the demo shows a "Valid" status no matter
     /// when screenshots are captured. Signed with secret = "devpad-demo-secret".

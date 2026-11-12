@@ -191,6 +191,7 @@ If the tool uses a privacy-sensitive API:
 - Microphone → `INFOPLIST_KEY_NSMicrophoneUsageDescription` + `com.apple.security.device.audio-input`.
 - Files outside picker → not needed (the project already has `ENABLE_USER_SELECTED_FILES = readonly`).
 - Network → `com.apple.security.network.client` in entitlements.
+- Inspecting or signalling other processes → needs the sbpl exception already in `DevPad.entitlements` (Port Killer). Extend that single rule; read the "Port Killer sandbox exception" section of `devpad-release` first. Never add a second `(allow …)` line — it is ignored.
 
 ## Step 8. Update README
 

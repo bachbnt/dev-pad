@@ -34,6 +34,10 @@ private enum Tool: String, CaseIterable, Identifiable, Hashable {
     case jwt
     case regex
     case hash
+    case encode
+    case uuid
+    case timestamp
+    case ports
     case diff
     case clipboard
     case dropshelf
@@ -51,6 +55,10 @@ private enum Tool: String, CaseIterable, Identifiable, Hashable {
         case .jwt:       return "sidebar.jwt"
         case .regex:     return "sidebar.regex"
         case .hash:      return "sidebar.hash"
+        case .encode:    return "sidebar.encode"
+        case .uuid:      return "sidebar.uuid"
+        case .timestamp: return "sidebar.timestamp"
+        case .ports:     return "sidebar.ports"
         case .diff:      return "sidebar.diff"
         case .clipboard: return "sidebar.clipboard"
         case .dropshelf: return "sidebar.dropshelf"
@@ -68,6 +76,10 @@ private enum Tool: String, CaseIterable, Identifiable, Hashable {
         case .jwt:       return "key"
         case .regex:     return "asterisk"
         case .hash:      return "number"
+        case .encode:    return "textformat.abc"
+        case .uuid:      return "dice"
+        case .timestamp: return "clock"
+        case .ports:     return "network"
         case .diff:      return "arrow.left.arrow.right"
         case .clipboard: return "doc.on.clipboard"
         case .dropshelf: return "tray.and.arrow.down"
@@ -163,6 +175,10 @@ struct MainWindowView: View {
         case .jwt:       JWTInspectorView()
         case .regex:     RegexTesterView()
         case .hash:      HashGeneratorView()
+        case .encode:    EncodeView()
+        case .uuid:      UUIDGeneratorView()
+        case .timestamp: TimestampConverterView()
+        case .ports:     PortKillerView()
         case .diff:      DiffCompareView()
         case .clipboard: ClipboardHistoryView()
         case .dropshelf: DropShelfView()

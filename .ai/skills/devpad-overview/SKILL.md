@@ -22,10 +22,15 @@ DevPad/
 │   ├── Utilities/                   # Engines / managers — no UI
 │   │   ├── JSONFormatter.swift, XMLFormatter.swift, SQLFormatter.swift
 │   │   ├── QRCode.swift, QRCamera.swift  (Vision-based camera scan)
+│   │   ├── QRPayload.swift           (VietQR / Wi-Fi / vCard build + parse, pure strings)
 │   │   ├── JWT.swift                 (decode + HMAC sign + RSA/ECDSA verify)
 │   │   ├── RegexEngine.swift         (NSRegularExpression + named-group scanner)
 │   │   ├── Hashing.swift             (CryptoKit + CommonCrypto, 8 algos + HMAC)
 │   │   ├── DiffEngine.swift          (LCS line + word + hunk grouping)
+│   │   ├── EncodeEngine.swift        (Base64 / Base64URL / percent-encoding)
+│   │   ├── IDGenerator.swift         (UUID v4/v7 + ULID from explicit bytes)
+│   │   ├── TimestampEngine.swift     (Unix epoch ↔ date)
+│   │   ├── PortScanner.swift         (libproc listening-port scan + signalling)
 │   │   ├── ClipboardManager.swift    (Timer + changeCount + Pure Paste)
 │   │   ├── ClipboardStore.swift      (history on disk: JSON in UserDefaults + image files)
 │   │   ├── DropShelfManager.swift, DropShelfMonitor.swift
@@ -35,11 +40,12 @@ DevPad/
 │   │   ├── JSONFormatterView, XMLFormatterView, SQLFormatterView,
 │   │   ├── URLParserView, QRGeneratorView, JWTInspectorView,
 │   │   ├── RegexTesterView, HashGeneratorView, DiffCompareView,
+│   │   ├── EncodeView, UUIDGeneratorView, TimestampConverterView, PortKillerView,
 │   │   ├── ClipboardHistoryView, ClipboardMenuBarView (tabbed popover),
 │   │   ├── DropShelfView, DropShelfPanelView, MultiFileDragSource,
 │   │   └── SettingsView
 │   ├── Assets.xcassets/
-│   ├── DevPad.entitlements          # app-sandbox + device.camera
+│   ├── DevPad.entitlements          # app-sandbox + device.camera + Port Killer sbpl exception
 │   └── Preview Content/
 ├── DevPadTests/                     # XCTest bundle — engine sources compiled straight in
 ├── docs/screenshots/                # README screenshots
@@ -75,7 +81,7 @@ This is the heart of the app — adding a tool means adding a case:
 
 ```swift
 private enum Tool: String, CaseIterable, Identifiable, Hashable {
-    case json, xml, sql, url, qr, jwt, regex, hash, diff, clipboard, dropshelf, settings
+    case json, xml, sql, url, qr, jwt, regex, hash, encode, uuid, timestamp, ports, diff, clipboard, dropshelf, settings
 
     var titleKey: String { switch self { case .json: return "sidebar.json"; … } }
     var icon:     String { switch self { case .json: return "curlybraces"; … } }   // SF Symbol

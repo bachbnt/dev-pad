@@ -4,9 +4,12 @@
 //  DevPad
 //
 //  Two-mode QR tool:
-//    • Generate — text/URL → QR image, save as PNG, copy to clipboard.
-//    • Scan     — drop or open an image → decode the embedded QR back to
-//                 its original text.
+//    • Generate — text/URL, VietQR bank transfer, Wi-Fi network or vCard
+//                 contact → QR image, save as PNG, copy to clipboard. The
+//                 structured types are built by `QRPayload.swift`.
+//    • Scan     — drop, paste or point a camera at a QR → decode it back to
+//                 its text; VietQR / Wi-Fi / vCard payloads are also shown
+//                 as labelled fields with one-click copy.
 //
 //  Both modes share the same view; a segmented picker at the top
 //  toggles between them.
@@ -19,6 +22,11 @@ import UniformTypeIdentifiers
 
 private enum QRMode: String, CaseIterable, Identifiable {
     case generate, scan
+    var id: String { rawValue }
+}
+
+private enum PayloadKind: String, CaseIterable, Identifiable {
+    case text, vietqr, wifi, vcard
     var id: String { rawValue }
 }
 
@@ -40,11 +48,32 @@ struct QRGeneratorView: View {
     @State private var generateError: String?
     @State private var savedPath: String?
     @State private var centerIcon: NSImage?
+    @State private var payloadKind: PayloadKind = .text
+
+    // VietQR. Bank and account number are remembered on this Mac so a
+    // recurring "pay me here" code is two clicks; Clear forgets them.
+    @AppStorage("qr.vietqr.bin") private var vietBIN: String = ""
+    @AppStorage("qr.vietqr.customBIN") private var vietCustomBIN: String = ""
+    @AppStorage("qr.vietqr.account") private var vietAccount: String = ""
+    @State private var vietAmount: String = ""
+    @State private var vietMessage: String = ""
+
+    // Wi-Fi. The password is never persisted.
+    @State private var wifiSSID: String = ""
+    @State private var wifiPassword: String = ""
+    @State private var wifiSecurity: WiFiSecurity = .wpa
+    @State private var wifiHidden = false
+
+    // vCard
+    @State private var card = ContactCard()
+
+    private static let otherBIN = "other"
 
     // Scan state
     @State private var scanSource: ScanSource = .image
     @State private var scanImage: NSImage?
     @State private var decoded: String = ""
+    @State private var showRawPayload = false
     @State private var scanError: String?
     @State private var isDropTargeted: Bool = false
     @StateObject private var camera = QRCamera()
@@ -66,8 +95,28 @@ struct QRGeneratorView: View {
         .padding(16)
         .onAppear {
             if DemoMode.isOn, text.isEmpty {
-                text = DemoMode.sampleQRText
+                switch DemoMode.qrKind {
+                case "vietqr":
+                    payloadKind = .vietqr
+                    vietBIN = DemoMode.sampleVietQRBIN
+                    vietAccount = DemoMode.sampleVietQRAccount
+                    vietAmount = DemoMode.sampleVietQRAmount
+                    vietMessage = DemoMode.sampleVietQRMessage
+                case "wifi":
+                    payloadKind = .wifi
+                    wifiSSID = DemoMode.sampleWiFiSSID
+                    wifiPassword = DemoMode.sampleWiFiPassword
+                case "vcard":
+                    payloadKind = .vcard
+                    card = DemoMode.sampleCard
+                default:
+                    text = DemoMode.sampleQRText
+                }
                 generate()
+                if DemoMode.qrScan, let payload = try? currentPayload() {
+                    mode = .scan
+                    decoded = payload
+                }
             }
             camera.refreshPermission()
         }
@@ -121,7 +170,8 @@ struct QRGeneratorView: View {
 
     private var generateView: some View {
         VStack(spacing: 12) {
-            inputEditor
+            payloadKindPicker
+            payloadInput
             generateControls
             centerIconRow
             if let generateError {
@@ -216,6 +266,187 @@ struct QRGeneratorView: View {
         .frame(minHeight: 100, maxHeight: 160)
     }
 
+    /// Switching type drops the preview: a QR made for another type would
+    /// look like it belongs to the form that is now showing.
+    private var payloadKindPicker: some View {
+        let binding = Binding<PayloadKind>(
+            get: { payloadKind },
+            set: { newKind in
+                payloadKind = newKind
+                qrImage = nil
+                generateError = nil
+                savedPath = nil
+            }
+        )
+        return Picker("", selection: binding) {
+            Text(settings.t("qr.kind.text")).tag(PayloadKind.text)
+            Text(settings.t("qr.kind.vietqr")).tag(PayloadKind.vietqr)
+            Text(settings.t("qr.kind.wifi")).tag(PayloadKind.wifi)
+            Text(settings.t("qr.kind.vcard")).tag(PayloadKind.vcard)
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .frame(maxWidth: 420)
+    }
+
+    @ViewBuilder
+    private var payloadInput: some View {
+        switch payloadKind {
+        case .text:   inputEditor
+        case .vietqr: vietQRForm
+        case .wifi:   wifiForm
+        case .vcard:  vcardForm
+        }
+    }
+
+    // MARK: Structured forms
+
+    private func fieldTitle(_ key: String) -> some View {
+        Text(settings.t(key))
+            .foregroundStyle(.secondary)
+            .gridColumnAlignment(.trailing)
+    }
+
+    private func formField(_ text: Binding<String>, monospaced: Bool = false) -> some View {
+        TextField("", text: text)
+            .textFieldStyle(.roundedBorder)
+            .font(monospaced ? .system(.body, design: .monospaced) : .body)
+            .frame(maxWidth: .infinity)
+    }
+
+    private func formPanel<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            content()
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color.secondary.opacity(0.06))
+        )
+    }
+
+    private var vietQRForm: some View {
+        let note = VietQR.sanitizeMessage(vietMessage)
+        let trimmed = vietMessage.trimmingCharacters(in: .whitespaces)
+        return formPanel {
+            Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: 12, verticalSpacing: 8) {
+                GridRow {
+                    fieldTitle("qr.vietqr.bank")
+                    Picker("", selection: $vietBIN) {
+                        Text(settings.t("qr.vietqr.bank.choose")).tag("")
+                        ForEach(VietQR.banks) { bank in
+                            Text(bank.name).tag(bank.bin)
+                        }
+                        Divider()
+                        Text(settings.t("qr.vietqr.bank.other")).tag(Self.otherBIN)
+                    }
+                    .pickerStyle(.menu)
+                    .labelsHidden()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    fieldTitle("qr.vietqr.account")
+                    formField($vietAccount, monospaced: true)
+                }
+                if vietBIN == Self.otherBIN {
+                    GridRow {
+                        fieldTitle("qr.vietqr.bin")
+                        formField($vietCustomBIN, monospaced: true)
+                        Color.clear.gridCellUnsizedAxes([.horizontal, .vertical])
+                        Color.clear.gridCellUnsizedAxes([.horizontal, .vertical])
+                    }
+                }
+                GridRow {
+                    fieldTitle("qr.vietqr.amount")
+                    formField($vietAmount, monospaced: true)
+                    fieldTitle("qr.vietqr.message")
+                    formField($vietMessage)
+                }
+            }
+            HStack(spacing: 8) {
+                Text(settings.t("qr.vietqr.hint"))
+                    .foregroundStyle(.tertiary)
+                Spacer(minLength: 8)
+                if !vietMessage.isEmpty {
+                    Text(settings.t("qr.vietqr.messageCountFmt", note.count, VietQR.recommendedMessageLength))
+                        .foregroundStyle(note.count > VietQR.recommendedMessageLength ? Color.orange : Color.secondary)
+                        .monospacedDigit()
+                }
+            }
+            .font(.caption)
+            if !trimmed.isEmpty, note != trimmed {
+                Text(settings.t("qr.vietqr.accentsRemoved", note))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            if note.count > VietQR.recommendedMessageLength {
+                Text(settings.t("qr.vietqr.messageLong", VietQR.recommendedMessageLength))
+                    .font(.caption)
+                    .foregroundStyle(Color.orange)
+            }
+        }
+    }
+
+    private var wifiForm: some View {
+        formPanel {
+            Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: 12, verticalSpacing: 8) {
+                GridRow {
+                    fieldTitle("qr.wifi.ssid")
+                    formField($wifiSSID)
+                    fieldTitle("qr.wifi.security")
+                    Picker("", selection: $wifiSecurity) {
+                        Text(settings.t("qr.wifi.security.wpa")).tag(WiFiSecurity.wpa)
+                        Text(settings.t("qr.wifi.security.wep")).tag(WiFiSecurity.wep)
+                        Text(settings.t("qr.wifi.security.none")).tag(WiFiSecurity.none)
+                    }
+                    .pickerStyle(.menu)
+                    .labelsHidden()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                GridRow {
+                    fieldTitle("qr.wifi.password")
+                    formField($wifiPassword, monospaced: true)
+                        .disabled(wifiSecurity == .none)
+                    Color.clear.gridCellUnsizedAxes([.horizontal, .vertical])
+                    Toggle(settings.t("qr.wifi.hidden"), isOn: $wifiHidden)
+                        .toggleStyle(.checkbox)
+                }
+            }
+            Text(settings.t("qr.wifi.hint"))
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+        }
+    }
+
+    private var vcardForm: some View {
+        formPanel {
+            Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: 12, verticalSpacing: 8) {
+                GridRow {
+                    fieldTitle("qr.vcard.firstName")
+                    formField($card.firstName)
+                    fieldTitle("qr.vcard.lastName")
+                    formField($card.lastName)
+                }
+                GridRow {
+                    fieldTitle("qr.vcard.organization")
+                    formField($card.organization)
+                    fieldTitle("qr.vcard.title")
+                    formField($card.title)
+                }
+                GridRow {
+                    fieldTitle("qr.vcard.phone")
+                    formField($card.mobile, monospaced: true)
+                    fieldTitle("qr.vcard.email")
+                    formField($card.email)
+                }
+                GridRow {
+                    fieldTitle("qr.vcard.website")
+                    formField($card.website)
+                        .gridCellColumns(3)
+                }
+            }
+        }
+    }
+
     private var generateControls: some View {
         HStack(spacing: 12) {
             Text(settings.t("qr.errorCorrection"))
@@ -231,10 +462,12 @@ struct QRGeneratorView: View {
 
             Spacer()
 
-            Button {
-                paste()
-            } label: {
-                Label(settings.t("common.paste"), systemImage: "doc.on.clipboard")
+            if payloadKind == .text {
+                Button {
+                    paste()
+                } label: {
+                    Label(settings.t("common.paste"), systemImage: "doc.on.clipboard")
+                }
             }
             Button(role: .destructive) {
                 clearGenerate()
@@ -542,15 +775,29 @@ struct QRGeneratorView: View {
         .onDrop(of: [.image, .fileURL], isTargeted: $isDropTargeted, perform: handleDrop)
     }
 
+    /// One labelled value of a recognised payload. `copy` is what the copy
+    /// button puts on the pasteboard (e.g. the bare digits of an amount).
+    private struct PayloadRow {
+        let label: String
+        let value: String
+        let copy: String
+    }
+
     @ViewBuilder
     private var decodedTextArea: some View {
         if !decoded.isEmpty {
+            let kind = QRPayload.classify(decoded)
+            let rows = payloadRows(kind)
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    Text(settings.t("qr.scan.result"))
+                    Text(rows.isEmpty
+                         ? settings.t("qr.scan.result")
+                         : settings.t("qr.scan.detectedFmt", kindName(kind)))
                         .font(.headline)
                     Spacer()
-                    if URL(string: decoded)?.scheme != nil {
+                    // `URL(string:)` happily parses "WIFI:T:WPA;…" as a URL with
+                    // a "wifi" scheme, so only offer Open for plain text.
+                    if rows.isEmpty, URL(string: decoded)?.scheme != nil {
                         Button {
                             if let url = URL(string: decoded) {
                                 NSWorkspace.shared.open(url)
@@ -566,25 +813,134 @@ struct QRGeneratorView: View {
                     }
                     .buttonStyle(.borderedProminent)
                 }
-                ScrollView {
-                    Text(decoded)
-                        .font(.system(.body, design: .monospaced))
-                        .textSelection(.enabled)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(12)
+                if rows.isEmpty {
+                    rawPayloadBox
+                        .frame(minHeight: 80, maxHeight: .infinity)
+                } else {
+                    payloadCard(rows)
+                    DisclosureGroup(settings.t("qr.scan.raw"), isExpanded: $showRawPayload) {
+                        rawPayloadBox
+                            .frame(height: 90)
+                    }
                 }
-                .background(
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(Color(nsColor: .textBackgroundColor))
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .strokeBorder(Color.secondary.opacity(0.25))
-                )
-                .frame(minHeight: 80, maxHeight: .infinity)
             }
         }
+    }
+
+    private var rawPayloadBox: some View {
+        ScrollView {
+            Text(decoded)
+                .font(.system(.body, design: .monospaced))
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(12)
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color(nsColor: .textBackgroundColor))
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .strokeBorder(Color.secondary.opacity(0.25))
+        )
+    }
+
+    private func payloadCard(_ rows: [PayloadRow]) -> some View {
+        ScrollView {
+            LazyVStack(spacing: 0) {
+                ForEach(Array(rows.enumerated()), id: \.offset) { index, row in
+                    HStack(spacing: 12) {
+                        Text(row.label)
+                            .foregroundStyle(.secondary)
+                            .frame(width: 150, alignment: .leading)
+                        Text(row.value)
+                            .textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Button {
+                            copyText(row.copy)
+                        } label: {
+                            Image(systemName: "doc.on.doc")
+                        }
+                        .buttonStyle(.borderless)
+                        .foregroundStyle(.secondary)
+                        .help(settings.t("common.copy"))
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    if index < rows.count - 1 { Divider() }
+                }
+            }
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color(nsColor: .textBackgroundColor))
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .strokeBorder(Color.secondary.opacity(0.25))
+        )
+        .frame(minHeight: 80, maxHeight: .infinity)
+    }
+
+    private func kindName(_ kind: QRPayloadKind) -> String {
+        switch kind {
+        case .vietQR: return settings.t("qr.kind.vietqr")
+        case .wifi:   return settings.t("qr.kind.wifi")
+        case .vcard:  return settings.t("qr.kind.vcard")
+        case .text:   return settings.t("qr.kind.text")
+        }
+    }
+
+    /// Empty for plain text, which is shown as-is.
+    private func payloadRows(_ kind: QRPayloadKind) -> [PayloadRow] {
+        func row(_ key: String, _ value: String, copy: String? = nil) -> PayloadRow {
+            PayloadRow(label: settings.t(key), value: value, copy: copy ?? value)
+        }
+        switch kind {
+        case .text:
+            return []
+        case .vietQR(let info):
+            var rows = [
+                row("qr.vietqr.bank", VietQR.bankName(forBIN: info.bin) ?? "BIN \(info.bin)", copy: info.bin),
+                row("qr.vietqr.account", info.account),
+                info.amount.map { row("qr.vietqr.amount", formatVND($0), copy: String($0)) }
+                    ?? row("qr.vietqr.amount", settings.t("qr.scan.noAmount"), copy: "")
+            ]
+            if let message = info.message, !message.isEmpty { rows.append(row("qr.vietqr.message", message)) }
+            return rows
+        case .wifi(let info):
+            var rows = [row("qr.wifi.ssid", info.ssid)]
+            if info.security != .none { rows.append(row("qr.wifi.password", info.password)) }
+            rows.append(row("qr.wifi.security", settings.t(securityKey(info.security))))
+            if info.hidden { rows.append(row("qr.wifi.hidden", settings.t("qr.scan.yes"))) }
+            return rows
+        case .vcard(let info):
+            var rows: [PayloadRow] = []
+            if !info.name.isEmpty { rows.append(row("qr.scan.field.name", info.name)) }
+            if !info.organization.isEmpty { rows.append(row("qr.vcard.organization", info.organization)) }
+            if !info.title.isEmpty { rows.append(row("qr.vcard.title", info.title)) }
+            rows += info.phones.map { row("qr.vcard.phone", $0) }
+            rows += info.emails.map { row("qr.vcard.email", $0) }
+            rows += info.urls.map { row("qr.vcard.website", $0) }
+            return rows
+        }
+    }
+
+    private func securityKey(_ security: WiFiSecurity) -> String {
+        switch security {
+        case .wpa:  return "qr.wifi.security.wpa"
+        case .wep:  return "qr.wifi.security.wep"
+        case .none: return "qr.wifi.security.none"
+        }
+    }
+
+    private func formatVND(_ amount: Int) -> String {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        f.locale = Locale(identifier: settings.language.resolvedCode)
+        return (f.string(from: NSNumber(value: amount)) ?? String(amount)) + " VND"
     }
 
     // MARK: - Banners
@@ -630,11 +986,33 @@ struct QRGeneratorView: View {
 
     // MARK: - Generate actions
 
+    /// The string the current form encodes. Engine errors are English
+    /// (see `devpad-conventions`); the banner adds the localized prefix.
+    private func currentPayload() throws -> String {
+        switch payloadKind {
+        case .text:
+            return text
+        case .vietqr:
+            guard !vietBIN.isEmpty else { throw QRPayloadError.bankRequired }
+            return try VietQR.build(
+                bin: vietBIN == Self.otherBIN ? vietCustomBIN : vietBIN,
+                account: vietAccount,
+                amount: try VietQR.parseAmount(vietAmount),
+                message: vietMessage
+            )
+        case .wifi:
+            return try WiFiQR.build(ssid: wifiSSID, password: wifiPassword,
+                                    security: wifiSecurity, hidden: wifiHidden)
+        case .vcard:
+            return try VCardQR.build(card)
+        }
+    }
+
     private func generate() {
         savedPath = nil
         do {
             qrImage = try QRCode.generate(
-                text,
+                try currentPayload(),
                 errorCorrection: errorCorrection,
                 centerIcon: centerIcon
             )
@@ -691,7 +1069,24 @@ struct QRGeneratorView: View {
     }
 
     private func clearGenerate() {
-        text = ""
+        switch payloadKind {
+        case .text:
+            text = ""
+        case .vietqr:
+            // Also forgets the remembered bank and account number.
+            vietBIN = ""
+            vietCustomBIN = ""
+            vietAccount = ""
+            vietAmount = ""
+            vietMessage = ""
+        case .wifi:
+            wifiSSID = ""
+            wifiPassword = ""
+            wifiSecurity = .wpa
+            wifiHidden = false
+        case .vcard:
+            card = ContactCard()
+        }
         qrImage = nil
         centerIcon = nil
         generateError = nil

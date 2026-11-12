@@ -1,6 +1,6 @@
 # DevPad
 
-A native macOS developer utility — format JSON / XML / SQL, parse URLs, generate and scan QR codes, decode/sign/verify JWTs, test regular expressions, hash text and files, compare diffs, track clipboard history with optional plain-text "Pure Paste" stripping, and collect files in a floating drop shelf. Runs quietly in the menu bar and hides the dock icon when the main window is closed.
+A native macOS developer utility — format JSON / XML / SQL, parse URLs, generate and scan QR codes (text, VietQR bank transfers, Wi-Fi, vCard), decode/sign/verify JWTs, test regular expressions, hash text and files, encode / decode Base64 and URLs, generate UUIDs and ULIDs, convert Unix timestamps, find and kill whatever is holding a TCP port, compare diffs, track clipboard history with optional plain-text "Pure Paste" stripping, and collect files in a floating drop shelf. Runs quietly in the menu bar and hides the dock icon when the main window is closed.
 
 ![License](https://img.shields.io/badge/license-Proprietary-blue.svg)
 ![macOS](https://img.shields.io/badge/macOS-13.0+-black.svg)
@@ -30,13 +30,21 @@ Listed in the same order as the sidebar.
 |:-:|:-:|:-:|
 | <img src="docs/screenshots/url130526.png" alt="URL Parser" width="100%"> | <img src="docs/screenshots/qr120526.png" alt="QR Generator" width="100%"> | <img src="docs/screenshots/jwt130526.png" alt="JWT Inspector" width="100%"> |
 
-| Regex Tester | Hash Generator | Diff Compare |
+| Regex Tester | Hash Generator | Base64 & URL Encode |
 |:-:|:-:|:-:|
-| <img src="docs/screenshots/regex130526.png" alt="Regex Tester" width="100%"> | <img src="docs/screenshots/hash130526.png" alt="Hash Generator" width="100%"> | <img src="docs/screenshots/diff120526.png" alt="Diff Compare" width="100%"> |
+| <img src="docs/screenshots/regex130526.png" alt="Regex Tester" width="100%"> | <img src="docs/screenshots/hash130526.png" alt="Hash Generator" width="100%"> | <img src="docs/screenshots/encode121126.png" alt="Base64 & URL Encode" width="100%"> |
 
-| Clipboard History | Drop Shelf | Settings |
+| UUID / ULID | Timestamp Converter | Port Killer |
 |:-:|:-:|:-:|
-| <img src="docs/screenshots/clipboard120526.png" alt="Clipboard History" width="100%"> | <img src="docs/screenshots/drop120526.png" alt="Drop Shelf" width="100%"> | <img src="docs/screenshots/settings120526.png" alt="Settings" width="100%"> |
+| <img src="docs/screenshots/uuid121126.png" alt="UUID / ULID" width="100%"> | <img src="docs/screenshots/timestamp121126.png" alt="Timestamp Converter" width="100%"> | <img src="docs/screenshots/ports121126.png" alt="Port Killer" width="100%"> |
+
+| Diff Compare | Clipboard History | Drop Shelf |
+|:-:|:-:|:-:|
+| <img src="docs/screenshots/diff120526.png" alt="Diff Compare" width="100%"> | <img src="docs/screenshots/clipboard120526.png" alt="Clipboard History" width="100%"> | <img src="docs/screenshots/drop120526.png" alt="Drop Shelf" width="100%"> |
+
+| Settings | | |
+|:-:|:-:|:-:|
+| <img src="docs/screenshots/settings120526.png" alt="Settings" width="100%"> | | |
 
 ## Features
 
@@ -44,10 +52,14 @@ Listed in the same order as the sidebar.
 - **XML Formatter** — pretty-print XML with standard indentation.
 - **SQL Formatter** — tokenizer-based pretty printer. Uppercases keywords, breaks each major clause (SELECT, FROM, WHERE, JOIN, GROUP BY, …) onto its own line, indents subqueries, and aligns AND / OR. Includes a Minify mode.
 - **URL Parser** — paste a URL, get every component on its own labelled row: scheme, user / password, host, port, path, query string, individual query parameters, fragment. One-click copy for any piece.
-- **QR Generator** — two-mode tool. **Generate**: text/URL → QR image with configurable error-correction level, optional center-icon overlay (logo branding), save as PNG or copy to clipboard. **Scan**: two input sources via a sub-picker — drop / paste / open any image containing a QR code, or point your webcam at one for live continuous scanning. Both sources use Vision's `VNDetectBarcodesRequest` so detection quality is identical. URL payloads get an "open as link" shortcut.
+- **QR Generator** — two-mode tool. **Generate**: pick a content type — **Text** (any text / URL), **VietQR** (a Vietnamese bank-transfer code with bank, account, amount and message pre-filled when a banking app scans it), **Wi-Fi** (scanning offers to join the network) or **vCard** (scanning offers to add a contact) — and get a QR image with configurable error-correction level, optional center-icon overlay (logo branding), save as PNG or copy to clipboard. **Scan**: two input sources via a sub-picker — drop / paste / open any image containing a QR code, or point your webcam at one for live continuous scanning. Both sources use Vision's `VNDetectBarcodesRequest` so detection quality is identical. URL payloads get an "open as link" shortcut, and scanned VietQR / Wi-Fi / vCard codes are shown as labelled fields (bank, account, amount; network, password; name, phone, email…) with a copy button on each.
 - **JWT Inspector** — two-mode tool. **Decode**: paste a JWT, see the header / payload / signature laid out, standard claims (`iss` / `sub` / `aud` / `exp` / `iat` / `nbf` / `jti`) parsed into a readable table, status badge tracking expiry / not-before, and an optional verify panel. Verify supports HS256/384/512 with a plain-string secret, plus RS256/384/512 and ES256/384/512 with a PEM-encoded public key. **Sign**: write your own header + payload JSON, pick an HMAC algorithm (HS256/384/512), supply a secret, get a signed token back. RSA/ECDSA private-key signing is intentionally left to CLI tooling.
 - **Regex Tester** — live regex playground. Type a pattern + test text, every match is painted inline in real attributed `NSTextView`. Toggle flags as pills (case-insensitive `i`, multiline `m`, dot-matches-newline `s`, unicode boundaries `u`). Match list below shows full match plus every capture group (including `(?<name>…)` named groups) with copy buttons. Flip to **Replace** mode to preview the rewritten text and see how many matches were substituted (`$1`, `$&`, etc.). Built-in cheat sheet popover for the most common regex tokens.
 - **Hash Generator** — three-mode tool. **Text**: type or paste a string, see every common digest (MD2, MD4, MD5, SHA-1, SHA-224, SHA-256, SHA-384, SHA-512) live in one table. **File**: drop a file (or pick one) and DevPad streams each algorithm off the main thread so even multi-GB files don't freeze the UI. **HMAC**: message + secret key + SHA-1/256/384/512 → authenticated digest (HMAC-SHA1 included because it's still the default for TOTP, Google Authenticator, AWS Sig v2, and a handful of legacy webhook signers). Toggle output format between Hex and Base64, paste an expected hash into "Compare with" to highlight which algorithm matches, copy individual rows or "Copy all".
+- **Base64 & URL Encode** — encode or decode text as Base64, Base64URL (the JWT / URL-safe alphabet, no padding) or URL percent-encoding. Decoding forgives whitespace and missing `=` padding but reports anything else as an error, and tells you when the decoded bytes aren't valid UTF-8 text. **Use as input** feeds the result back in with the direction flipped, so a round trip is one click.
+- **UUID / ULID** — generate up to 100 identifiers at once: UUID v4 (random), UUID v7 (RFC 9562, time-ordered) or ULID. Toggle upper / lower case and, for UUIDs, hyphens. Copy a single row or the whole batch.
+- **Timestamp Converter** — paste a Unix timestamp or a date and get seconds, milliseconds, ISO 8601 in UTC and in your local zone, a readable local time and a relative description ("3 days ago"), each with a copy button. The unit (seconds / ms / µs / ns) is auto-detected or can be pinned, and **Now** drops in the current time.
+- **Port Killer** — lists every process that is listening on a TCP port (port, process, PID, and whether it's reachable only from this Mac or from every interface) and stops it with one click: **Kill** sends SIGTERM, the context menu offers a force kill (SIGKILL) and copy actions. Filter by port, process name or PID. The list refreshes whenever you open the tab. DevPad never offers to kill itself or PID 1.
 - **Diff Compare** — side-by-side or unified text comparison with git-style hunks, configurable context, inline word/character-level highlighting (red/green), plus Ignore-whitespace and Ignore-case options. Comparisons run off the main thread (a spinner shows next to **Compare**), and files with tens of thousands of lines diff in milliseconds when only a few lines changed.
 - **Clipboard History** — automatically saves the last 20 clipboard entries (text + images). Pinned items appear in a separate section, persist across restarts, delete individually or clear all. Copying a secret from a password manager (anything flagged with the `org.nspasteboard.ConcealedType` / `TransientType` / `AutoGeneratedType` pasteboard markers, as 1Password, Bitwarden and Keychain do) is never recorded. Images over 10 MB are skipped. Copying something that's already in the list moves it to the top instead of duplicating it. Includes **Pure Paste** — an on/off toggle that strips rich-text formatting from anything you copy, so subsequent paste lands as plain text everywhere.
 - **Drop Shelf** — Dropover-style floating shelf. Toggle it on and a small panel pops up whenever you start dragging files anywhere on the Mac; drop files into it, accumulate as many as you like, then drag the whole bundle out to a new destination. Drag-out semantics are **move**: when you deliver the files somewhere else, the shelf clears those entries automatically (in the popup, the in-app tab, and the menu-bar tab — all three views share state). The popup also auto-dismisses when the drop lands outside it, so it never lingers after a successful drag. Multi-file drag is real AppKit `NSDraggingSource` — Finder receives every file at once.
@@ -78,7 +90,7 @@ Press `⌘R` to build and run.
 xcodebuild -project DevPad.xcodeproj -scheme DevPad -configuration Debug test
 ```
 
-Or `⌘U` in Xcode. The `DevPadTests` target compiles the pure-logic files (diff, clipboard rules and store, JSON / SQL / XML formatters, hashing, JWT, regex) straight into the test bundle, so the tests don't launch the app or touch your real clipboard history. Tests need macOS 14+ (XCTest's own requirement); the app itself still targets macOS 13.
+Or `⌘U` in Xcode. The `DevPadTests` target compiles the pure-logic files (diff, clipboard rules and store, JSON / SQL / XML formatters, hashing, JWT, regex, Base64 / URL encoding, UUID / ULID generation, timestamp conversion, port scanning, VietQR / Wi-Fi / vCard payloads) straight into the test bundle, so the tests don't launch the app or touch your real clipboard history. Tests need macOS 14+ (XCTest's own requirement); the app itself still targets macOS 13.
 
 ### Package as DMG
 
@@ -137,7 +149,7 @@ With `-p`, the script prints `git status` before committing so you can see exact
 
 ### Demo mode (Debug builds only)
 
-For maintainers who want to grab marketing screenshots quickly, launch a **Debug** build with a flag that pre-fills every tab with curated sample content (formatted JSON, an XML library, a long SQL query, a parsed URL, a QR text, a signed JWT, an email-finding regex with named groups, hash sample text, a multi-line diff, mock clipboard items, drop-shelf files):
+For maintainers who want to grab marketing screenshots quickly, launch a **Debug** build with a flag that pre-fills every tab with curated sample content (formatted JSON, an XML library, a long SQL query, a parsed URL, a QR text (or `--demo-qr=vietqr|wifi|vcard`, plus `--demo-qr-scan` for the scan view), a signed JWT, an email-finding regex with named groups, hash sample text, a multi-line diff, mock clipboard items, drop-shelf files):
 
 ```bash
 # Xcode: Edit Scheme → Run → Arguments → add "--demo-fill"
@@ -161,7 +173,7 @@ After first launch, a clipboard icon appears in the macOS menu bar (top-right). 
 
 ### Main window
 
-Click **Open DevPad** in the menu bar popover footer to open the main window. The sidebar has twelve tabs and a search field at the top so you can jump straight to a tool by typing its name (works in either language):
+Click **Open DevPad** in the menu bar popover footer to open the main window. The sidebar has sixteen tabs and a search field at the top so you can jump straight to a tool by typing its name (works in either language):
 
 | Tab | Description |
 |-----|-------------|
@@ -169,10 +181,14 @@ Click **Open DevPad** in the menu bar popover footer to open the main window. Th
 | XML Formatter | Paste XML, press Format or `⌘↵` |
 | SQL Formatter | Paste a query, press Format or `⌘↵`. Keywords uppercased, clauses on their own lines, subqueries indented. Minify available. |
 | URL Parser | Paste a URL, press Parse or `⌘↵`. Every component (scheme, host, path, query items, fragment) listed with one-click copy. |
-| QR Generator | Generate QR from text, or scan a QR from an image **or** your webcam. Top picker swaps Generate / Scan; Scan has a sub-picker for Image / Camera. |
+| QR Generator | Generate a QR from text, a **VietQR** bank transfer, a **Wi-Fi** network or a **vCard** contact, or scan a QR from an image **or** your webcam. Top picker swaps Generate / Scan; a second picker chooses the content type; Scan has a sub-picker for Image / Camera and shows VietQR / Wi-Fi / vCard codes as copyable fields. |
 | JWT Inspector | Decode a JWT into header / payload / signature with parsed claims and a status badge, or sign a fresh HMAC token. Optional verify panel supports HS\*/RS\*/ES\*. |
 | Regex Tester | Type a regex + test string, press Match or `⌘↵`. Matches highlight inline, capture groups (and `(?<name>…)`) listed below. Replace mode previews the rewrite via the **Apply** button. Cheat sheet popover for common tokens. |
 | Hash Generator | Hash text, files, or HMAC-authenticate a message. Eight algorithms (MD2 / MD4 / MD5 / SHA-1 / SHA-224 / SHA-256 / SHA-384 / SHA-512) shown at once, Hex or Base64 output, "Compare with" field for verification. Press **Hash** / **Generate** (`⌘↵`) in Text and HMAC modes; File mode hashes automatically on drop. |
+| Base64 & URL Encode | Pick Base64 / Base64URL / URL, choose Encode or Decode, press the button or `⌘↵`. **Use as input** chains the result back in. |
+| UUID / ULID | Pick UUID v4 / v7 / ULID, set how many (1–100), press Generate or `⌘↵`. Per-row copy and Copy all. |
+| Timestamp Converter | Type a Unix timestamp or a date, press Convert or `⌘↵` (or **Now**). Seconds, ms, ISO 8601 (UTC and local), readable and relative forms with copy buttons. |
+| Port Killer | Opens with every listening TCP port. Type to filter, click **Kill** to stop a process (SIGTERM) or right-click for Force kill (SIGKILL) and copy. Refresh with the button or `⌘↵`. |
 | Diff Compare | Two text panes side-by-side, press Compare or `⌘↵`. Switch between Split / Unified view, adjust context size, toggle Ignore whitespace / case. |
 | Clipboard History | Full view with a detail pane on the right; pinned items grouped on top. The header has a **Pure paste** toggle that strips rich-text formatting from copied text. |
 | Drop Shelf | Toggle the feature on/off, see collected files, drag the whole bundle (or individual files) out to any destination |
@@ -196,6 +212,11 @@ Click **Open DevPad** in the menu bar popover footer to open the main window. Th
 
 ### QR Generator notes
 
+- **Content types** — the second picker under Generate chooses what the QR contains. A QR code is only a string; the structured types are built by `QRPayload.swift` and then go through the same generation, error-correction, center-icon, copy and save path as plain text. Switching type clears the preview so it never shows a code for a different form.
+- **VietQR** — pick a bank (44 banks that accept interbank transfers, from VietQR's public list; **Other…** takes any 6-digit bank code), the account number, an optional amount in VND (`50.000` and `50,000` both work) and an optional message. With an amount the code is a *dynamic* VietQR; without one it is *static* and the payer types the amount. The message is folded to plain ASCII (`Chuyển khoản` → `Chuyen khoan`) because banking apps differ in how they treat accents; DevPad shows what will actually be sent and warns above 25 characters, since some banks truncate longer messages. The bank and account number are remembered on this Mac (`UserDefaults`); **Clear** forgets them. The generated strings match the output of VietQR's own image service character for character, but the final test is always scanning with a real banking app — try your own account first.
+- **Wi-Fi** — SSID, password, security (WPA / WPA2 / WPA3, WEP or open) and an optional *hidden network* flag. Characters the format reserves (`\ ; , : "`) are escaped; WPA passwords must be 8–63 characters (or 64 hex digits) and SSIDs at most 32 bytes. The password is never saved.
+- **vCard** — first / last name (at least one), company, job title, mobile, email and website, written as a vCard 3.0 with CRLF line endings. Commas, semicolons and backslashes in values are escaped; the email gets a loose sanity check.
+- **Scan** — a scanned VietQR (checksum verified), Wi-Fi or vCard code is shown as labelled fields with a copy button each; the raw text stays one disclosure away. The **Open as link** button is offered only for plain text, since a `WIFI:…` string would otherwise parse as a URL.
 - **Generate**: powered by Core Image's `CIQRCodeGenerator`. Choose the error-correction level (Low / Medium / Quartile / High) — higher correction tolerates more damage but produces a denser code. Output is upscaled with nearest-neighbour so modules stay sharp.
 - **Center icon**: optionally add a small logo image (PNG/JPEG) that DevPad composites into the middle of the QR with a rounded white pad. The icon covers ~22 % of the QR side; bump the error-correction level to **Quartile** or **High** so scanners can still recover the obscured modules.
 - **Save**: writes a 1024-px-wide PNG via `NSSavePanel`.
@@ -233,6 +254,35 @@ Click **Open DevPad** in the menu bar popover footer to open the main window. Th
 - **Output format** — toggle between lowercase hex (default) and Base64. Both representations are computed from the same raw digest bytes, so switching never re-hashes the input.
 - **Copy** — per-row copy or "Copy all" which produces a multi-line `ALGO: digest` block that's safe to paste into a README or changelog.
 
+### Base64 & URL Encode notes
+
+- **Three schemes** — Base64 (standard alphabet, `=` padding), Base64URL (`-` / `_` instead of `+` / `/`, padding dropped — what JWT segments and many URL tokens use), and URL percent-encoding.
+- **Forgiving decode** — whitespace and line breaks are ignored and missing `=` padding is restored. Anything else invalid (a stray `$`, a lone trailing character, `-` / `_` in plain Base64 mode) is an error rather than a silent misdecode.
+- **Text only** — the input and output are UTF-8 text. If a Base64 payload decodes to bytes that aren't valid UTF-8 (an image, a compressed blob), DevPad says so instead of showing garbage.
+- **URL encoding is strict** — everything except letters, digits and `- . _ ~` is escaped, including `/ ? & = #`, i.e. `encodeURIComponent` semantics. On decode a `+` stays a `+`; it only means "space" in form-encoded bodies.
+
+### UUID / ULID notes
+
+- **UUID v4** — 122 random bits; version and variant bits are set per RFC 9562.
+- **UUID v7** — a 48-bit Unix-millisecond timestamp followed by random bits, so values sort by creation time. IDs generated in the same millisecond are not guaranteed to be ordered among themselves.
+- **ULID** — 26 Crockford-Base32 characters: 48-bit millisecond timestamp plus 80 random bits. Case-insensitive; DevPad prints it in the case you pick.
+- **Randomness** — comes from Swift's `SystemRandomNumberGenerator` (the OS CSPRNG). Batches are clamped to 100.
+
+### Timestamp Converter notes
+
+- **Unit detection** — a number is read as seconds below 10¹¹, milliseconds below 10¹⁴, microseconds below 10¹⁷ and nanoseconds above that. A millisecond value from before March 1973 looks like seconds; pin the unit if you hit that. Fractional seconds (`1700000000.5`) and negative values are accepted.
+- **Date strings** — ISO 8601 with an offset (`2023-11-14T22:13:20Z`, `…+07:00`, with or without fractional seconds) and RFC 2822 carry their own zone. Zone-less layouts (`yyyy-MM-dd`, `yyyy-MM-dd HH:mm[:ss[.SSS]]`, `T` separator, `/` separators) are read in the zone chosen by the **Dates without a zone** picker (Local or UTC).
+- **Range** — years 0001–9999. Dates are `Double` seconds internally, so nanosecond input loses sub-microsecond precision.
+
+### Port Killer notes
+
+- **What it shows** — one row per (process, port) for TCP sockets in the LISTEN state: port, process name, PID and the address(es) it listens on. **All interfaces** (orange) means `0.0.0.0` / `::`, i.e. reachable from the network; otherwise the loopback address is shown. UDP is not listed.
+- **No `lsof`** — the list is read straight from the kernel's process table via `libproc` (`proc_listpids` / `proc_pidinfo` / `proc_pidfdinfo`), so DevPad spawns no child process and there is no text output to parse.
+- **Kill vs. force kill** — **Kill** sends SIGTERM, which lets the process shut down cleanly; a stuck one may need **Force kill (SIGKILL)** from the context menu. The row disappears on the next refresh, which runs about half a second after a successful kill.
+- **Only your processes** — macOS hides other users' processes from you and refuses to let you signal them, so system daemons owned by root won't appear. A refused signal shows up as an error banner.
+- **Guard rails** — the signal call rejects PID 0, 1 and negatives (those would hit a whole process group or `launchd`), and the DevPad row has its Kill button disabled.
+- **App Sandbox exception** — this is the one tab that needs more than the sandbox allows. `DevPad.entitlements` carries a `temporary-exception.sbpl` rule that re-allows exactly four operations: listing PIDs, reading a process's info, reading its file descriptors, and sending signals. If that rule is ever lost the tab shows an "access denied" error instead of an empty list. The exception rules out a Mac App Store submission; DevPad is distributed as a GitHub Release, so that doesn't apply today.
+
 ### Pure Paste workflow
 
 1. Open **Clipboard History** (main window or the Clipboard tab in the menu bar) and toggle **Pure paste** on. The setting persists across launches.
@@ -262,7 +312,7 @@ This follows the standard menu-bar app pattern (similar to Maccy, Bartender). Un
 
 | Key | Action |
 |-----|--------|
-| `⌘↵` | Run the primary action of the current tab — Format (JSON / XML / SQL), Parse (URL), Generate QR, Decode / Sign (JWT), Match / Apply (Regex), Hash / Generate (Hash text & HMAC), or Compare (Diff). |
+| `⌘↵` | Run the primary action of the current tab — Format (JSON / XML / SQL), Parse (URL), Generate QR, Decode / Sign (JWT), Match / Apply (Regex), Hash / Generate (Hash text & HMAC), Encode / Decode (Base64 & URL), Generate (UUID / ULID), Convert (Timestamp), Refresh (Port Killer), or Compare (Diff). |
 | `⌘,` | Open Settings |
 | `⌘Q` | Quit (only when the window is focused) |
 
@@ -283,10 +333,15 @@ DevPad/
 │   │   ├── XMLFormatter.swift       # Tokenizer-based pretty printer
 │   │   ├── SQLFormatter.swift       # Tokenizer-based SQL pretty printer + minifier
 │   │   ├── QRCode.swift             # CoreImage generate + Vision decode
+│   │   ├── QRPayload.swift          # VietQR / Wi-Fi / vCard payload build + parse
 │   │   ├── QRCamera.swift           # AVCaptureSession → AVCaptureVideoDataOutput → Vision
 │   │   ├── JWT.swift                # JWT decode + HMAC sign + HMAC/RSA/ECDSA verify
 │   │   ├── RegexEngine.swift        # NSRegularExpression wrapper + named-group parser
 │   │   ├── Hashing.swift            # CryptoKit hashes + HMAC + streaming file hash
+│   │   ├── EncodeEngine.swift       # Base64 / Base64URL / percent-encoding
+│   │   ├── IDGenerator.swift        # UUID v4 / v7 + ULID from explicit bytes
+│   │   ├── TimestampEngine.swift    # Unix epoch ↔ date parsing + formatting
+│   │   ├── PortScanner.swift        # libproc listening-port scan + signalling
 │   │   ├── DiffEngine.swift         # Myers line/word diff + hunk grouping
 │   │   ├── ClipboardManager.swift   # NSPasteboard polling + Pure Paste
 │   │   ├── ClipboardStore.swift     # History on disk: JSON in UserDefaults + image files
@@ -299,10 +354,14 @@ DevPad/
 │   │   ├── XMLFormatterView.swift
 │   │   ├── SQLFormatterView.swift
 │   │   ├── URLParserView.swift          # Paste URL → labelled components
-│   │   ├── QRGeneratorView.swift        # Generate/scan QR codes
+│   │   ├── QRGeneratorView.swift        # Generate (text / VietQR / Wi-Fi / vCard) and scan QR codes
 │   │   ├── JWTInspectorView.swift       # Decode / sign / verify JWTs
 │   │   ├── RegexTesterView.swift        # Live regex matcher + replace mode + cheatsheet
 │   │   ├── HashGeneratorView.swift      # Hash text / files / HMAC with compare-with
+│   │   ├── EncodeView.swift             # Base64 / Base64URL / URL encode + decode
+│   │   ├── UUIDGeneratorView.swift      # UUID v4 / v7 / ULID batches
+│   │   ├── TimestampConverterView.swift # Unix timestamp ↔ date with copyable rows
+│   │   ├── PortKillerView.swift         # Listening TCP ports with one-click kill
 │   │   ├── DiffCompareView.swift
 │   │   ├── ClipboardHistoryView.swift   # Full window detail view (Pure Paste toggle)
 │   │   ├── ClipboardMenuBarView.swift   # Tabbed menu-bar popover (Clipboard + Drop Shelf)
@@ -311,7 +370,7 @@ DevPad/
 │   │   ├── MultiFileDragSource.swift    # AppKit drag-source bridge (multi-file)
 │   │   └── SettingsView.swift
 │   ├── Assets.xcassets/
-│   ├── DevPad.entitlements          # App sandbox entitlements
+│   ├── DevPad.entitlements          # App sandbox + camera + Port Killer's sandbox exception
 │   └── Preview Content/
 ├── DevPadTests/                     # XCTest unit tests for the engines
 ├── docs/screenshots/                # README screenshots
@@ -330,9 +389,12 @@ DevPad/
 - **SQL formatter** — pure-Swift tokenizer that recognises keywords (case-insensitive matching, uppercased on emit), identifiers, numbers, strings (`'...'` / `"..."` with escaped doubled quotes), line and block comments, operators, and punctuation. Emission rules: a newline before every clause-starter keyword (SELECT, FROM, WHERE, JOIN, …); commas in a SELECT/VALUES/SET list break to a new column-line; subqueries `(…)` push the indent level. The tokenizer-then-emit approach is simple to reason about and easy to extend with new keywords.
 - **URL parser** — defers entirely to Foundation's `URLComponents`. The view's only job is to flatten the parsed components onto a fixed list of rows so the structure is glanceable. Query items are rendered separately from the raw query string so duplicate keys and unusual encoding are obvious at a glance.
 - **QR code** — generation uses CoreImage's `CIQRCodeGenerator` filter (no third-party deps); the raw 21–177-module image is upscaled with `CGAffineTransform(scaleX:y:)` and `.interpolation(.none)` so the modules stay crisp. When a center icon is provided, the QR is composited inside an `NSImage.lockFocus()` block: the QR is drawn first, then a rounded white pad, then the icon — yielding the standard logo-in-the-middle look without needing a third-party library. Image decoding uses Vision's `VNDetectBarcodesRequest` filtered to `.qr`; the first observation's `payloadStringValue` is the decoded text. The camera scanner reuses the exact same Vision request, just fed from live frames instead of a static image: an `AVCaptureSession` with an `AVCaptureVideoDataOutput` produces `CMSampleBuffer`s on a background queue, the delegate pulls out the `CVPixelBuffer` and runs `VNDetectBarcodesRequest` synchronously, then hops to main via `DispatchQueue.main.async` to update `@Published var decoded`. (The simpler `AVCaptureMetadataOutput` is intentionally avoided — it rejects `.qr` with "Unsupported type found - use -availableMetadataObjectTypes" on some Mac configurations, even when the canonical filter pattern is followed.) `alwaysDiscardsLateVideoFrames = true` keeps memory bounded if Vision lags. Lifecycle is opt-in: the session only starts when the Scan tab's Camera sub-mode is on screen and stops on `onDisappear` or when the user toggles back to the Image source, so the webcam indicator LED never lingers.
+- **QR payloads** — `QRPayload.swift` is pure string work: `VietQR` assembles the NAPAS / EMVCo TLV (`00` format, `01` static-or-dynamic, `38` beneficiary with GUID `A000000727`, `53` currency 704, `54` amount, `58` country, `62` message, `63` CRC-16/CCITT-FALSE) and `parse` re-reads it, rejecting anything with a bad checksum; `WiFiQR` and `VCardQR` do the same for `WIFI:…` and vCard 3.0. The bank table was generated from VietQR's public bank list rather than typed in. Every builder has a matching parser, which is what lets the scan view label fields and lets the tests prove the round trip; the VietQR strings are also checked against VietQR's own QR output.
 - **JWT** — decoding is pure Foundation: split on `.`, base64url-decode each segment, `JSONSerialization` for header and payload. HMAC sign / verify uses CryptoKit (`HMAC<SHA256/384/512>`) and runs in constant time. Asymmetric verify uses Security framework's `SecKeyCreateWithData` + `SecKeyVerifySignature`; the PEM body is parsed inline — for RSA, the SPKI wrapper is walked to extract the inner `RSAPublicKey` PKCS#1 bytes; for EC, the X9.63 uncompressed point is read straight from the SPKI BIT STRING. ECDSA signatures inside JWTs are JOSE-encoded as `R||S`, but `SecKey` wants ASN.1 DER, so DevPad converts on the fly. The verifier explicitly refuses `alg: none` tokens.
 - **Regex** — Foundation's `NSRegularExpression` does the heavy lifting. Match / Apply runs on demand via `⌘↵` so the rest of the app stays consistent with the other tools (formatters, JWT, diff). Named groups (`(?<name>…)`, `(?'name'…)`, `(?P<name>…)`) aren't exposed by NSRegularExpression's public API, so DevPad has a small hand-rolled scanner that walks the pattern and maps group index → name (skipping `(?:…)`, lookarounds, and inline flag groups). Inline match painting uses a thin `NSViewRepresentable` over `NSTextView` because SwiftUI's `TextEditor` on macOS 13 can't apply background attributes reliably; the wrapper restores the caret position on every update so highlighting doesn't cost the user their typing context.
 - **Hash** — mix of CryptoKit and CommonCrypto, no third-party deps. CryptoKit covers MD5 / SHA-1 (via `Insecure`) and SHA-256 / SHA-384 / SHA-512 (top-level types). MD2, MD4, and SHA-224 don't have CryptoKit counterparts, so DevPad calls the C symbols from `CommonCrypto` (`CC_MD2` / `CC_MD4` / `CC_SHA224` for one-shot, `CC_xxx_Init` / `_Update` / `_Final` for file streaming). Apple has marked MD2 / MD4 as deprecated in their SDK; to avoid noisy build warnings DevPad re-imports those four C symbols via `@_silgen_name` aliases that strip the deprecation attribute. Text and HMAC modes hash synchronously on the main thread (input is small enough — under a microsecond per algorithm) and only run when the user presses **Hash** / **Generate** or `⌘↵`. File mode is auto-triggered on drop / choose because that gesture is itself the explicit action; it opens a `FileHandle`, reads 1 MB chunks, feeds each into the hash's `update(data:)` (or `CC_xxx_Update`), then `finalize()`s — bounded memory regardless of file size. Each algorithm runs sequentially on a detached `Task`, with the UI receiving incremental updates via `MainActor.run`. The "Compare with" check trims whitespace and strips `:` / `-` so a hash copied from `shasum`, a changelog, or a GitHub release artifact all match the same digest. HMAC reuses CryptoKit's `HMAC<H>` (constant-time by construction) with `Insecure.SHA1` for HMAC-SHA1 and the modern types for SHA-256/384/512.
+- **Encode / UUID / Timestamp** — three small pure-Foundation engines (`EncodeEngine`, `IDGenerator`, `TimestampEngine`), compiled straight into the test bundle like the other engines. `IDGenerator` builds every UUID / ULID from explicit bytes plus an explicit timestamp, so the tests can check the RFC 9562 and ULID spec examples bit for bit; only `generate` touches the RNG and the clock. `TimestampEngine` auto-detects the unit from magnitude and keeps date strings with their own offset apart from zone-less ones, which use the zone the caller passes. The timestamp view stores the parsed result and derives its rows at render time, so the readable and relative rows follow the app language.
+- **Port Killer** — `PortScanner` walks `proc_listpids`, lists each process's file descriptors with `proc_pidinfo(PROC_PIDLISTFDS)` and inspects the sockets with `proc_pidfdinfo(PROC_PIDFDSOCKETINFO)`, keeping TCP sockets whose state is LISTEN. A socket bound to `::` carries both the IPv4 and IPv6 flag, so the IPv6 address is read first. Because the sandbox silently denies these calls for other processes, an "is anything readable besides ourselves?" check turns that case into an explicit error instead of an empty list. Scanning runs on a detached task and the result is frozen before it hops back to the main actor. The unit tests open real listening sockets and spawn real child processes, which works because the test bundle isn't sandboxed; the sandbox exception itself was verified separately by running a sandboxed binary signed with the same rule.
 - **Pure Paste** — when toggled on, `ClipboardManager` inspects the system pasteboard each tick. If the clipboard advertises any rich-text representation (`.rtf`, `.rtfd`, `.html`, `WebArchivePboardType`, …) alongside the plain string, the manager overwrites the pasteboard with just the plain text and records the plain version in history. A `suppressNextChange` flag prevents the rewrite from being re-processed as a brand-new clipboard event.
 - **Drop Shelf detection** — an `NSEvent` global monitor watches `.leftMouseDragged` events from other apps and inspects `NSPasteboard(.drag).changeCount`. The count only advances when a real drag-and-drop session starts, so plain mouse drags over empty space are ignored. The panel appears after a short delay (≈1 s) so quick accidental drags don't flash it.
 - **Drop Shelf auto-dismiss** — the monitor only auto-dismisses on mouse-up if a real external file drag was in flight (`handleDrag` saw the drag-pasteboard changeCount move and confirmed file URLs). A plain click outside the panel is deliberately ignored — otherwise the user couldn't click around Finder to navigate to a drop destination while the popup is up. When a drag did happen, the monitor compares the cursor's screen point against the visible panel's frame: if the drop landed outside, the popup is dismissed; if it landed inside, the popup stays so the user can keep accumulating. Popup-initiated drags use a separate path — `MultiFileDragSource`'s `onSessionEnd` callback (with the drop's screen point + `NSDragOperation`) decides whether the drop was a real delivery, a drop back into the popup, or a cancel, and clears state + dismisses accordingly. A short-lived flag on `DropShelfMonitor` prevents the global mouse-up handler from racing with the drag-source callback.
