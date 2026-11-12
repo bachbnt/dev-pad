@@ -10,6 +10,21 @@
 
 import SwiftUI
 
+/// False for a tool tab that is alive but not the one on screen. Tools stay
+/// mounted after their first visit so typed input survives tab switches, which
+/// also means `onDisappear` no longer fires on a switch — views that hold
+/// hardware (the QR camera) watch this instead.
+private struct ToolActiveKey: EnvironmentKey {
+    static let defaultValue = true
+}
+
+extension EnvironmentValues {
+    var isToolActive: Bool {
+        get { self[ToolActiveKey.self] }
+        set { self[ToolActiveKey.self] = newValue }
+    }
+}
+
 private enum Tool: String, CaseIterable, Identifiable, Hashable {
     case json
     case xml
@@ -64,6 +79,8 @@ private enum Tool: String, CaseIterable, Identifiable, Hashable {
 struct MainWindowView: View {
     @EnvironmentObject private var settings: AppSettings
     @State private var selection: Tool = .json
+    /// Tools opened at least once. Only these are instantiated; see `detailStack`.
+    @State private var visited: Set<Tool> = [.json]
     @State private var searchQuery: String = ""
     @FocusState private var searchFocused: Bool
 
@@ -96,44 +113,11 @@ struct MainWindowView: View {
             .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 260)
             .navigationTitle(settings.t("app.name"))
         } detail: {
-            switch selection {
-            case .json:
-                JSONFormatterView()
-                    .navigationTitle(settings.t("sidebar.json"))
-            case .xml:
-                XMLFormatterView()
-                    .navigationTitle(settings.t("sidebar.xml"))
-            case .sql:
-                SQLFormatterView()
-                    .navigationTitle(settings.t("sidebar.sql"))
-            case .url:
-                URLParserView()
-                    .navigationTitle(settings.t("sidebar.url"))
-            case .qr:
-                QRGeneratorView()
-                    .navigationTitle(settings.t("sidebar.qr"))
-            case .jwt:
-                JWTInspectorView()
-                    .navigationTitle(settings.t("sidebar.jwt"))
-            case .regex:
-                RegexTesterView()
-                    .navigationTitle(settings.t("sidebar.regex"))
-            case .hash:
-                HashGeneratorView()
-                    .navigationTitle(settings.t("sidebar.hash"))
-            case .diff:
-                DiffCompareView()
-                    .navigationTitle(settings.t("sidebar.diff"))
-            case .clipboard:
-                ClipboardHistoryView()
-                    .navigationTitle(settings.t("sidebar.clipboard"))
-            case .dropshelf:
-                DropShelfView()
-                    .navigationTitle(settings.t("sidebar.dropshelf"))
-            case .settings:
-                SettingsView()
-                    .navigationTitle(settings.t("sidebar.settings"))
-            }
+            detailStack
+                .navigationTitle(settings.t(selection.titleKey))
+        }
+        .onChange(of: selection) { newTool in
+            visited.insert(newTool)
         }
         .onChange(of: settings.pendingTool) { pending in
             if let raw = pending, let tool = Tool(rawValue: raw) {
@@ -143,6 +127,46 @@ struct MainWindowView: View {
                 searchQuery = ""
                 settings.pendingTool = nil
             }
+        }
+    }
+
+    // MARK: - Detail
+
+    /// Visited tools stay mounted and are only hidden, so switching tabs
+    /// doesn't throw away what the user typed (a half-pasted JSON, a diff
+    /// in progress). Hidden tabs are also disabled: without that their
+    /// `⌘↵` shortcuts would still compete with the visible tool's.
+    private var detailStack: some View {
+        ZStack {
+            ForEach(Tool.allCases) { tool in
+                if visited.contains(tool) {
+                    let isActive = tool == selection
+                    toolView(tool)
+                        .opacity(isActive ? 1 : 0)
+                        .allowsHitTesting(isActive)
+                        .disabled(!isActive)
+                        .accessibilityHidden(!isActive)
+                        .environment(\.isToolActive, isActive)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func toolView(_ tool: Tool) -> some View {
+        switch tool {
+        case .json:      JSONFormatterView()
+        case .xml:       XMLFormatterView()
+        case .sql:       SQLFormatterView()
+        case .url:       URLParserView()
+        case .qr:        QRGeneratorView()
+        case .jwt:       JWTInspectorView()
+        case .regex:     RegexTesterView()
+        case .hash:      HashGeneratorView()
+        case .diff:      DiffCompareView()
+        case .clipboard: ClipboardHistoryView()
+        case .dropshelf: DropShelfView()
+        case .settings:  SettingsView()
         }
     }
 

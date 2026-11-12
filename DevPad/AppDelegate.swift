@@ -35,6 +35,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
     }
 
+    /// Clipboard history writes are debounced; make sure the last copy made
+    /// right before ⌘Q isn't lost.
+    func applicationWillTerminate(_ notification: Notification) {
+        ClipboardManager.shared.flush()
+    }
+
     /// Returning false stops the app from quitting when the last window
     /// closes. Without this, our menu bar icon would vanish along with
     /// the window.

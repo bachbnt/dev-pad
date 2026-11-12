@@ -29,6 +29,7 @@ private enum ScanSource: String, CaseIterable, Identifiable {
 
 struct QRGeneratorView: View {
     @EnvironmentObject private var settings: AppSettings
+    @Environment(\.isToolActive) private var isToolActive
 
     @State private var mode: QRMode = .generate
 
@@ -74,6 +75,15 @@ struct QRGeneratorView: View {
             // Always release the camera when the user leaves the QR tab —
             // no point keeping the webcam LED on otherwise.
             camera.stop()
+        }
+        // The tab stays mounted while another tool is showing, so onDisappear
+        // doesn't fire on a tab switch; same release, keyed off visibility.
+        .onChange(of: isToolActive) { active in
+            if active {
+                camera.refreshPermission()
+            } else {
+                camera.stop()
+            }
         }
         .onChange(of: mode) { newValue in
             if newValue != .scan {

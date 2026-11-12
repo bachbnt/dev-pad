@@ -43,6 +43,19 @@
 		B000003F000000000000000A /* Hashing.swift in Sources */ = {isa = PBXBuildFile; fileRef = B000003F000000000000000B /* Hashing.swift */; };
 		B0000040000000000000000A /* HashGeneratorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000040000000000000000B /* HashGeneratorView.swift */; };
 		B0000041000000000000000A /* QRCamera.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000041000000000000000B /* QRCamera.swift */; };
+		B0000042000000000000000A /* ClipboardStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000042000000000000000B /* ClipboardStore.swift */; };
+		B0000050000000000000000A /* DiffEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000050000000000000000B /* DiffEngineTests.swift */; };
+		B0000051000000000000000A /* ClipboardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000051000000000000000B /* ClipboardTests.swift */; };
+		B0000052000000000000000A /* EngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000052000000000000000B /* EngineTests.swift */; };
+		B0000060000000000000000A /* DiffEngine.swift in Sources (DevPadTests) */ = {isa = PBXBuildFile; fileRef = B000000A000000000000000B /* DiffEngine.swift */; };
+		B0000061000000000000000A /* ClipboardItem.swift in Sources (DevPadTests) */ = {isa = PBXBuildFile; fileRef = B000000C000000000000000B /* ClipboardItem.swift */; };
+		B0000062000000000000000A /* ClipboardStore.swift in Sources (DevPadTests) */ = {isa = PBXBuildFile; fileRef = B0000042000000000000000B /* ClipboardStore.swift */; };
+		B0000063000000000000000A /* JSONFormatter.swift in Sources (DevPadTests) */ = {isa = PBXBuildFile; fileRef = B0000008000000000000000B /* JSONFormatter.swift */; };
+		B0000064000000000000000A /* SQLFormatter.swift in Sources (DevPadTests) */ = {isa = PBXBuildFile; fileRef = B0000035000000000000000B /* SQLFormatter.swift */; };
+		B0000065000000000000000A /* XMLFormatter.swift in Sources (DevPadTests) */ = {isa = PBXBuildFile; fileRef = B0000009000000000000000B /* XMLFormatter.swift */; };
+		B0000066000000000000000A /* Hashing.swift in Sources (DevPadTests) */ = {isa = PBXBuildFile; fileRef = B000003F000000000000000B /* Hashing.swift */; };
+		B0000067000000000000000A /* JWT.swift in Sources (DevPadTests) */ = {isa = PBXBuildFile; fileRef = B000003B000000000000000B /* JWT.swift */; };
+		B0000068000000000000000A /* RegexEngine.swift in Sources (DevPadTests) */ = {isa = PBXBuildFile; fileRef = B000003D000000000000000B /* RegexEngine.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -84,10 +97,22 @@
 		B000003F000000000000000B /* Hashing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Hashing.swift; sourceTree = "<group>"; };
 		B0000040000000000000000B /* HashGeneratorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HashGeneratorView.swift; sourceTree = "<group>"; };
 		B0000041000000000000000B /* QRCamera.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCamera.swift; sourceTree = "<group>"; };
+		B0000042000000000000000B /* ClipboardStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardStore.swift; sourceTree = "<group>"; };
+		B0000050000000000000000B /* DiffEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffEngineTests.swift; sourceTree = "<group>"; };
+		B0000051000000000000000B /* ClipboardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardTests.swift; sourceTree = "<group>"; };
+		B0000052000000000000000B /* EngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineTests.swift; sourceTree = "<group>"; };
+		B0000053000000000000000B /* DevPadTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DevPadTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		B0000011000000000000000A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B0000056000000000000000A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -101,6 +126,7 @@
 			isa = PBXGroup;
 			children = (
 				B0000013000000000000000A /* DevPad */,
+				B0000054000000000000000A /* DevPadTests */,
 				B0000014000000000000000A /* Products */,
 			);
 			sourceTree = "<group>";
@@ -125,6 +151,7 @@
 			isa = PBXGroup;
 			children = (
 				B000000F000000000000000B /* DevPad.app */,
+				B0000053000000000000000B /* DevPadTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -158,6 +185,7 @@
 				B0000009000000000000000B /* XMLFormatter.swift */,
 				B000000A000000000000000B /* DiffEngine.swift */,
 				B000000B000000000000000B /* ClipboardManager.swift */,
+				B0000042000000000000000B /* ClipboardStore.swift */,
 				B0000024000000000000000B /* Localization.swift */,
 				B0000030000000000000000B /* DropShelfManager.swift */,
 				B0000031000000000000000B /* DropShelfMonitor.swift */,
@@ -189,6 +217,16 @@
 			path = "Preview Content";
 			sourceTree = "<group>";
 		};
+		B0000054000000000000000A /* DevPadTests */ = {
+			isa = PBXGroup;
+			children = (
+				B0000050000000000000000B /* DiffEngineTests.swift */,
+				B0000051000000000000000B /* ClipboardTests.swift */,
+				B0000052000000000000000B /* EngineTests.swift */,
+			);
+			path = DevPadTests;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -209,6 +247,22 @@
 			productReference = B000000F000000000000000B /* DevPad.app */;
 			productType = "com.apple.product-type.application";
 		};
+		B0000057000000000000000A /* DevPadTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B0000058000000000000000A /* Build configuration list for PBXNativeTarget "DevPadTests" */;
+			buildPhases = (
+				B0000055000000000000000A /* Sources */,
+				B0000056000000000000000A /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = DevPadTests;
+			productName = DevPadTests;
+			productReference = B0000053000000000000000B /* DevPadTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -220,6 +274,9 @@
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
 					B0000019000000000000000A = {
+						CreatedOnToolsVersion = 15.0;
+					};
+					B0000057000000000000000A = {
 						CreatedOnToolsVersion = 15.0;
 					};
 				};
@@ -238,6 +295,7 @@
 			projectRoot = "";
 			targets = (
 				B0000019000000000000000A /* DevPad */,
+				B0000057000000000000000A /* DevPadTests */,
 			);
 		};
 /* End PBXProject section */
@@ -293,6 +351,26 @@
 				B000003F000000000000000A /* Hashing.swift in Sources */,
 				B0000040000000000000000A /* HashGeneratorView.swift in Sources */,
 				B0000041000000000000000A /* QRCamera.swift in Sources */,
+				B0000042000000000000000A /* ClipboardStore.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B0000055000000000000000A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B0000050000000000000000A /* DiffEngineTests.swift in Sources */,
+				B0000051000000000000000A /* ClipboardTests.swift in Sources */,
+				B0000052000000000000000A /* EngineTests.swift in Sources */,
+				B0000060000000000000000A /* DiffEngine.swift in Sources (DevPadTests) */,
+				B0000061000000000000000A /* ClipboardItem.swift in Sources (DevPadTests) */,
+				B0000062000000000000000A /* ClipboardStore.swift in Sources (DevPadTests) */,
+				B0000063000000000000000A /* JSONFormatter.swift in Sources (DevPadTests) */,
+				B0000064000000000000000A /* SQLFormatter.swift in Sources (DevPadTests) */,
+				B0000065000000000000000A /* XMLFormatter.swift in Sources (DevPadTests) */,
+				B0000066000000000000000A /* Hashing.swift in Sources (DevPadTests) */,
+				B0000067000000000000000A /* JWT.swift in Sources (DevPadTests) */,
+				B0000068000000000000000A /* RegexEngine.swift in Sources (DevPadTests) */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -486,6 +564,38 @@
 			};
 			name = Release;
 		};
+		B0000059000000000000000A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bachbnt.DevPadTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		B000005A000000000000000A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bachbnt.DevPadTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -503,6 +613,15 @@
 			buildConfigurations = (
 				B000001F000000000000000A /* Debug */,
 				B0000020000000000000000A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B0000058000000000000000A /* Build configuration list for PBXNativeTarget "DevPadTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B0000059000000000000000A /* Debug */,
+				B000005A000000000000000A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -28,6 +28,10 @@ struct DiffCompareView: View {
     @State private var segments: [DiffSegment] = []
     @State private var summary: (additions: Int, deletions: Int, modifications: Int) = (0, 0, 0)
     @State private var hasRun: Bool = false
+    /// True while a diff is computing off the main thread. `diffGeneration`
+    /// lets a newer run (or Clear All) discard the result of an older one.
+    @State private var isComputing: Bool = false
+    @State private var diffGeneration: Int = 0
 
     // Display options — persisted across re-runs of the comparison.
     @State private var viewMode: DiffViewMode = .split
@@ -131,6 +135,8 @@ struct DiffCompareView: View {
     private var actionBar: some View {
         HStack(spacing: 8) {
             Button(role: .destructive) {
+                diffGeneration += 1
+                isComputing = false
                 leftText = ""; rightText = ""
                 rows = []; segments = []
                 summary = (0, 0, 0)
@@ -139,6 +145,10 @@ struct DiffCompareView: View {
                 Label(settings.t("common.clearAll"), systemImage: "trash")
             }
             Spacer()
+            if isComputing {
+                ProgressView()
+                    .controlSize(.small)
+            }
             Button {
                 runDiff()
             } label: {
@@ -292,16 +302,36 @@ struct DiffCompareView: View {
 
     // MARK: - Actions
 
+    /// The LCS-style search is the only expensive step, so it runs on a
+    /// background queue; big inputs no longer freeze the window.
     private func runDiff() {
-        rows = DiffEngine.diff(
-            left: leftText,
-            right: rightText,
-            ignoreWhitespace: ignoreWhitespace,
-            ignoreCase: ignoreCase
-        )
-        summary = DiffEngine.summary(rows: rows)
-        segments = DiffEngine.segment(rows: rows, context: contextLines)
-        hasRun = true
+        diffGeneration += 1
+        let generation = diffGeneration
+        let left = leftText
+        let right = rightText
+        let ignoreWS = ignoreWhitespace
+        let ignoreCs = ignoreCase
+        let context = contextLines
+        isComputing = true
+
+        DispatchQueue.global(qos: .userInitiated).async {
+            let newRows = DiffEngine.diff(left: left, right: right,
+                                          ignoreWhitespace: ignoreWS, ignoreCase: ignoreCs)
+            let newSummary = DiffEngine.summary(rows: newRows)
+            let newSegments = DiffEngine.segment(rows: newRows, context: context)
+            DispatchQueue.main.async {
+                // A newer run or Clear All superseded this one.
+                guard generation == diffGeneration else { return }
+                rows = newRows
+                summary = newSummary
+                // Context may have been nudged while we were computing.
+                segments = context == contextLines
+                    ? newSegments
+                    : DiffEngine.segment(rows: newRows, context: contextLines)
+                hasRun = true
+                isComputing = false
+            }
+        }
     }
 
     /// Re-runs only the hunk grouping (when the user nudges context size,

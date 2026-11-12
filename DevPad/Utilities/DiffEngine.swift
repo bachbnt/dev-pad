@@ -3,22 +3,29 @@
 //  DiffEngine.swift
 //  DevPad
 //
-//  Computes a line-by-line diff between two strings using LCS, plus
-//  inline word/char-level diff, and groups the line-level diff into
-//  git-style hunks (changes + context, gaps elided) for display.
+//  Computes a line-by-line diff between two strings, plus inline
+//  word/char-level diff, and groups the line-level diff into git-style hunks
+//  (changes + context, gaps elided) for display.
+//
+//  The core is Myers' O(ND) shortest-edit-script over interned Int ids,
+//  after trimming the common prefix/suffix. The old full LCS table needed
+//  O(lines²) memory — two 10k-line files meant ~800 MB.
 //
 
 import Foundation
 
-enum DiffOp {
+enum DiffOp: Sendable {
     case equal       // both sides identical
     case modified    // both sides present but different
     case removed     // present only on left  (deletion)
     case added       // present only on right (insertion)
 }
 
-struct DiffRow: Identifiable {
-    let id = UUID()
+/// Ids are positions in the sequence they belong to (row index, segment index,
+/// …) rather than `UUID()`s: SwiftUI sees the same identity when a view
+/// re-renders the same diff instead of tearing every row down.
+struct DiffRow: Identifiable, Sendable {
+    let id: Int
     let leftLineNumber: Int?    // nil if this row has no left line
     let rightLineNumber: Int?   // nil if this row has no right line
     let leftText: String?
@@ -26,17 +33,17 @@ struct DiffRow: Identifiable {
     let op: DiffOp
 }
 
-struct InlineSegment: Identifiable {
-    enum Kind { case equal, removed, added }
-    let id = UUID()
+struct InlineSegment: Identifiable, Sendable {
+    enum Kind: Sendable { case equal, removed, added }
+    let id: Int
     let text: String
     let kind: Kind
 }
 
 /// A git-style hunk: a contiguous block of rows including context, with
 /// a `@@ -leftStart,leftCount +rightStart,rightCount @@` header.
-struct DiffHunk: Identifiable {
-    let id = UUID()
+struct DiffHunk: Identifiable, Sendable {
+    let id: Int
     let rows: [DiffRow]
     let leftStart: Int
     let leftCount: Int
@@ -49,12 +56,12 @@ struct DiffHunk: Identifiable {
 }
 
 /// Either a hunk to render or a "@@ N lines hidden @@" gap marker.
-struct DiffSegment: Identifiable {
-    enum Kind {
+struct DiffSegment: Identifiable, Sendable {
+    enum Kind: Sendable {
         case hunk(DiffHunk)
         case gap(unchangedLines: Int)
     }
-    let id = UUID()
+    let id: Int
     let kind: Kind
 }
 
@@ -78,26 +85,25 @@ struct DiffEngine {
         let leftCanon = leftLines.map { canonicalize($0, ignoreWhitespace: ignoreWhitespace, ignoreCase: ignoreCase) }
         let rightCanon = rightLines.map { canonicalize($0, ignoreWhitespace: ignoreWhitespace, ignoreCase: ignoreCase) }
 
-        let lcs = lcsTable(leftCanon, rightCanon)
+        // Intern each distinct (canonicalized) line as an Int so the edit-script
+        // search compares integers instead of Strings.
+        var ids: [String: Int] = [:]
+        func intern(_ line: String) -> Int {
+            if let id = ids[line] { return id }
+            let id = ids.count
+            ids[line] = id
+            return id
+        }
+        let leftIds = leftCanon.map(intern)
+        let rightIds = rightCanon.map(intern)
 
-        var ops: [(DiffOp, Int?, Int?)] = []
-        var i = leftCanon.count
-        var j = rightCanon.count
-        while i > 0 && j > 0 {
-            if leftCanon[i - 1] == rightCanon[j - 1] {
-                ops.append((.equal, i - 1, j - 1))
-                i -= 1; j -= 1
-            } else if lcs[i - 1][j] >= lcs[i][j - 1] {
-                ops.append((.removed, i - 1, nil))
-                i -= 1
-            } else {
-                ops.append((.added, nil, j - 1))
-                j -= 1
+        let ops: [(DiffOp, Int?, Int?)] = editScript(leftIds, rightIds).map { edit in
+            switch edit {
+            case .equal(let a, let b): return (.equal, a, b)
+            case .delete(let a):       return (.removed, a, nil)
+            case .insert(let b):       return (.added, nil, b)
             }
         }
-        while i > 0 { ops.append((.removed, i - 1, nil)); i -= 1 }
-        while j > 0 { ops.append((.added, nil, j - 1)); j -= 1 }
-        ops.reverse()
 
         var rows: [DiffRow] = []
         var k = 0
@@ -107,6 +113,7 @@ struct DiffEngine {
                 let lIdx = li ?? 0
                 let rIdx = ri ?? 0
                 rows.append(DiffRow(
+                    id: rows.count,
                     leftLineNumber: lIdx + 1,
                     rightLineNumber: rIdx + 1,
                     leftText: leftLines[lIdx],
@@ -143,6 +150,7 @@ struct DiffEngine {
                 let lIdx = removedIdxs[p]
                 let rIdx = addedIdxs[p]
                 rows.append(DiffRow(
+                    id: rows.count,
                     leftLineNumber: lIdx + 1,
                     rightLineNumber: rIdx + 1,
                     leftText: leftLines[lIdx],
@@ -153,6 +161,7 @@ struct DiffEngine {
             for p in pairCount..<removedIdxs.count {
                 let lIdx = removedIdxs[p]
                 rows.append(DiffRow(
+                    id: rows.count,
                     leftLineNumber: lIdx + 1,
                     rightLineNumber: nil,
                     leftText: leftLines[lIdx],
@@ -163,6 +172,7 @@ struct DiffEngine {
             for p in pairCount..<addedIdxs.count {
                 let rIdx = addedIdxs[p]
                 rows.append(DiffRow(
+                    id: rows.count,
                     leftLineNumber: nil,
                     rightLineNumber: rIdx + 1,
                     leftText: nil,
@@ -216,20 +226,20 @@ struct DiffEngine {
         for (s, e) in ranges {
             let gap = s - (prevEnd + 1)
             if gap > 0 {
-                segments.append(DiffSegment(kind: .gap(unchangedLines: gap)))
+                segments.append(DiffSegment(id: segments.count, kind: .gap(unchangedLines: gap)))
             }
             let slice = Array(rows[s...e])
-            segments.append(DiffSegment(kind: .hunk(makeHunk(rows: slice))))
+            segments.append(DiffSegment(id: segments.count, kind: .hunk(makeHunk(id: s, rows: slice))))
             prevEnd = e
         }
         let trailing = rows.count - 1 - prevEnd
         if trailing > 0 {
-            segments.append(DiffSegment(kind: .gap(unchangedLines: trailing)))
+            segments.append(DiffSegment(id: segments.count, kind: .gap(unchangedLines: trailing)))
         }
         return segments
     }
 
-    private static func makeHunk(rows: [DiffRow]) -> DiffHunk {
+    private static func makeHunk(id: Int, rows: [DiffRow]) -> DiffHunk {
         var lMin = Int.max, lCount = 0
         var rMin = Int.max, rCount = 0
         for row in rows {
@@ -243,6 +253,7 @@ struct DiffEngine {
             }
         }
         return DiffHunk(
+            id: id,
             rows: rows,
             leftStart: lMin == .max ? 0 : lMin,
             leftCount: lCount,
@@ -261,59 +272,48 @@ struct DiffEngine {
 
         if l.isEmpty || r.isEmpty {
             return (
-                left:  l.map { InlineSegment(text: $0, kind: .removed) },
-                right: r.map { InlineSegment(text: $0, kind: .added) }
+                left:  l.enumerated().map { InlineSegment(id: $0.offset, text: $0.element, kind: .removed) },
+                right: r.enumerated().map { InlineSegment(id: $0.offset, text: $0.element, kind: .added) }
             )
         }
 
-        let table = lcsTable(l, r)
-
-        var ops: [(InlineSegment.Kind, String?, String?)] = []
-        var i = l.count, j = r.count
-        while i > 0 && j > 0 {
-            if l[i - 1] == r[j - 1] {
-                ops.append((.equal, l[i - 1], r[j - 1]))
-                i -= 1; j -= 1
-            } else if table[i - 1][j] >= table[i][j - 1] {
-                ops.append((.removed, l[i - 1], nil))
-                i -= 1
-            } else {
-                ops.append((.added, nil, r[j - 1]))
-                j -= 1
-            }
+        var ids: [String: Int] = [:]
+        func intern(_ token: String) -> Int {
+            if let id = ids[token] { return id }
+            let id = ids.count
+            ids[token] = id
+            return id
         }
-        while i > 0 { ops.append((.removed, l[i - 1], nil)); i -= 1 }
-        while j > 0 { ops.append((.added, nil, r[j - 1])); j -= 1 }
-        ops.reverse()
+        let ops = editScript(l.map(intern), r.map(intern))
 
         var leftSegs: [InlineSegment] = []
         var rightSegs: [InlineSegment] = []
 
         func appendLeft(_ kind: InlineSegment.Kind, _ s: String) {
             if let last = leftSegs.last, last.kind == kind {
-                leftSegs[leftSegs.count - 1] = InlineSegment(text: last.text + s, kind: kind)
+                leftSegs[leftSegs.count - 1] = InlineSegment(id: last.id, text: last.text + s, kind: kind)
             } else {
-                leftSegs.append(InlineSegment(text: s, kind: kind))
+                leftSegs.append(InlineSegment(id: leftSegs.count, text: s, kind: kind))
             }
         }
 
         func appendRight(_ kind: InlineSegment.Kind, _ s: String) {
             if let last = rightSegs.last, last.kind == kind {
-                rightSegs[rightSegs.count - 1] = InlineSegment(text: last.text + s, kind: kind)
+                rightSegs[rightSegs.count - 1] = InlineSegment(id: last.id, text: last.text + s, kind: kind)
             } else {
-                rightSegs.append(InlineSegment(text: s, kind: kind))
+                rightSegs.append(InlineSegment(id: rightSegs.count, text: s, kind: kind))
             }
         }
 
-        for (kind, lTok, rTok) in ops {
-            switch kind {
-            case .equal:
-                if let s = lTok { appendLeft(.equal, s) }
-                if let s = rTok { appendRight(.equal, s) }
-            case .removed:
-                if let s = lTok { appendLeft(.removed, s) }
-            case .added:
-                if let s = rTok { appendRight(.added, s) }
+        for edit in ops {
+            switch edit {
+            case .equal(let i, let j):
+                appendLeft(.equal, l[i])
+                appendRight(.equal, r[j])
+            case .delete(let i):
+                appendLeft(.removed, l[i])
+            case .insert(let j):
+                appendRight(.added, r[j])
             }
         }
 
@@ -361,25 +361,130 @@ struct DiffEngine {
         return t
     }
 
-    // MARK: - LCS
+    // MARK: - Edit script (Myers O(ND))
 
-    private static func lcsTable(_ a: [String], _ b: [String]) -> [[Int]] {
-        let m = a.count
-        let n = b.count
-        guard m > 0 && n > 0 else {
-            return Array(repeating: Array(repeating: 0, count: n + 1), count: m + 1)
-        }
-        var t = Array(repeating: Array(repeating: 0, count: n + 1), count: m + 1)
-        for i in 1...m {
-            for j in 1...n {
-                if a[i - 1] == b[j - 1] {
-                    t[i][j] = t[i - 1][j - 1] + 1
-                } else {
-                    t[i][j] = max(t[i - 1][j], t[i][j - 1])
-                }
+    /// One step of the shortest edit script turning `a` into `b`; indices
+    /// point into the original sequences.
+    enum Edit: Equatable, Sendable {
+        case equal(a: Int, b: Int)
+        case delete(a: Int)
+        case insert(b: Int)
+    }
+
+    /// Largest edit distance searched. Memory for the backtrack trace grows
+    /// with D² (~64 MB at 4 000), so beyond it the middle section is reported
+    /// as wholly deleted + inserted — still a valid diff, just not minimal.
+    static let maxEditDistance = 4_000
+
+    /// Shortest edit script from `a` to `b`, in order. Trims the common
+    /// prefix and suffix first, which is what makes "small change in a big
+    /// file" cost almost nothing.
+    static func editScript(_ a: [Int], _ b: [Int], maxEditDistance: Int = DiffEngine.maxEditDistance) -> [Edit] {
+        let minLen = min(a.count, b.count)
+        var prefix = 0
+        while prefix < minLen && a[prefix] == b[prefix] { prefix += 1 }
+        var suffix = 0
+        while suffix < minLen - prefix && a[a.count - 1 - suffix] == b[b.count - 1 - suffix] { suffix += 1 }
+
+        var script: [Edit] = []
+        script.reserveCapacity(max(a.count, b.count))
+        for i in 0..<prefix { script.append(.equal(a: i, b: i)) }
+
+        let aMid = Array(a[prefix..<(a.count - suffix)])
+        let bMid = Array(b[prefix..<(b.count - suffix)])
+        for edit in middleScript(aMid, bMid, maxEditDistance: maxEditDistance) {
+            switch edit {
+            case .equal(let i, let j): script.append(.equal(a: i + prefix, b: j + prefix))
+            case .delete(let i):       script.append(.delete(a: i + prefix))
+            case .insert(let j):       script.append(.insert(b: j + prefix))
             }
         }
-        return t
+
+        for s in 0..<suffix {
+            script.append(.equal(a: a.count - suffix + s, b: b.count - suffix + s))
+        }
+        return script
+    }
+
+    private static func middleScript(_ a: [Int], _ b: [Int], maxEditDistance: Int) -> [Edit] {
+        if a.isEmpty { return b.indices.map { .insert(b: $0) } }
+        if b.isEmpty { return a.indices.map { .delete(a: $0) } }
+        if let script = myers(a, b, maxEditDistance: maxEditDistance) { return script }
+        return a.indices.map { .delete(a: $0) } + b.indices.map { .insert(b: $0) }
+    }
+
+    /// Myers' greedy forward algorithm. Returns nil if the edit distance
+    /// exceeds `maxEditDistance`.
+    private static func myers(_ a: [Int], _ b: [Int], maxEditDistance: Int) -> [Edit]? {
+        let n = a.count
+        let m = b.count
+        let dLimit = min(n + m, maxEditDistance)
+        let off = dLimit + 1
+        // v[off + k] = furthest x reached on diagonal k (k = x - y).
+        var v = [Int](repeating: 0, count: 2 * dLimit + 3)
+        // trace[d][k + d] = v[off + k] as it was *before* round d.
+        var trace: [[Int32]] = []
+
+        for d in 0...dLimit {
+            trace.append(v[(off - d)...(off + d)].map { Int32(truncatingIfNeeded: $0) })
+
+            // Clamp to diagonals that intersect the n×m grid.
+            let kMin = -(d - 2 * max(0, d - m))
+            let kMax = d - 2 * max(0, d - n)
+            var k = kMin
+            while k <= kMax {
+                var x: Int
+                if k == kMin || (k != kMax && v[off + k - 1] < v[off + k + 1]) {
+                    x = v[off + k + 1]            // step down  → insertion
+                } else {
+                    x = v[off + k - 1] + 1        // step right → deletion
+                }
+                var y = x - k
+                while x < n && y < m && a[x] == b[y] { x += 1; y += 1 }
+                v[off + k] = x
+                if x >= n && y >= m {
+                    return backtrack(trace: trace, lastD: d, n: n, m: m)
+                }
+                k += 2
+            }
+        }
+        return nil
+    }
+
+    private static func backtrack(trace: [[Int32]], lastD: Int, n: Int, m: Int) -> [Edit] {
+        var x = n
+        var y = m
+        var reversed: [Edit] = []
+
+        var d = lastD
+        while d > 0 {
+            let tv = trace[d]
+            let kMin = -(d - 2 * max(0, d - m))
+            let kMax = d - 2 * max(0, d - n)
+            let k = x - y
+            let cameFromInsert = k == kMin || (k != kMax && tv[k - 1 + d] < tv[k + 1 + d])
+            let prevK = cameFromInsert ? k + 1 : k - 1
+            let prevX = Int(tv[prevK + d])
+            let prevY = prevX - prevK
+
+            // Diagonal run after the single insert/delete of this round.
+            let midX = cameFromInsert ? prevX : prevX + 1
+            let midY = midX - k
+            while x > midX && y > midY {
+                x -= 1; y -= 1
+                reversed.append(.equal(a: x, b: y))
+            }
+            reversed.append(cameFromInsert ? .insert(b: prevY) : .delete(a: prevX))
+            x = prevX
+            y = prevY
+            d -= 1
+        }
+        // Round 0 is only the leading diagonal.
+        while x > 0 && y > 0 {
+            x -= 1; y -= 1
+            reversed.append(.equal(a: x, b: y))
+        }
+        return reversed.reversed()
     }
 
     // MARK: - Summary
