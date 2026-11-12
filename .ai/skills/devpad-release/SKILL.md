@@ -31,7 +31,7 @@ Debug config is unchanged — dev cycle in Xcode stays fast. The above only kick
 
 In both Debug + Release `XCBuildConfiguration` of the `DevPad` target:
 
-- `ENABLE_APP_SANDBOX = YES` — sandbox is mandatory for Mac App Store, and we want it for safety.
+- `ENABLE_APP_SANDBOX = YES` — we want it for safety. (It is also mandatory for the Mac App Store, but see the Port Killer exception below: that exception makes an App Store submission impossible.)
 - `ENABLE_HARDENED_RUNTIME = YES` — required for notarization (when you eventually sign).
 - `ENABLE_USER_SELECTED_FILES = readonly` — auto-adds the user-selected-files entitlement; lets `NSOpenPanel` work.
 - `INFOPLIST_KEY_NSCameraUsageDescription = "DevPad uses the camera to scan QR codes pointed at it."` — required for camera. Add a matching `INFOPLIST_KEY_*` for any new privacy-sensitive API.
@@ -44,7 +44,19 @@ In both Debug + Release `XCBuildConfiguration` of the `DevPad` target:
 ```xml
 <key>com.apple.security.app-sandbox</key><true/>
 <key>com.apple.security.device.camera</key><true/>
+<key>com.apple.security.temporary-exception.sbpl</key>
+<string>(allow process-info-listpids process-info-pidinfo process-info-pidfdinfo signal)</string>
 ```
+
+### Port Killer sandbox exception
+
+`PortScanner` must enumerate other processes' sockets and signal them; the sandbox denies both. The `sbpl` entry re-allows exactly those four operations and nothing else. Rules for touching it:
+
+- **Keep it ONE rule.** Only the first S-expression of the string is applied; a second `(allow …)` line is silently ignored (verified empirically — `(allow process-info* (target others))` followed by `(allow signal …)` left signalling denied). Add operations to the same rule's operation list instead.
+- `proc_listpids` needs a rule *without* a `(target …)` filter; `(target others)` alone doesn't cover it.
+- An app carrying this exception cannot be submitted to the Mac App Store. DevPad ships as a GitHub Release, so that's accepted — don't promise an App Store build.
+- Don't widen it (e.g. `process-info*`, or dropping the operation list) without a reason; don't remove the sandbox to avoid it.
+- After changing it, re-verify with a sandboxed test binary (see gotcha #19 in `devpad-macos-gotchas`) — the unit tests run unsandboxed and cannot catch a broken exception.
 
 Both are explicit even though `ENABLE_APP_SANDBOX = YES` would auto-add the sandbox one — explicit is clearer to future maintainers. Add new entitlement keys here when a new tool needs a privacy-sensitive capability.
 
@@ -104,7 +116,7 @@ codesign -d --entitlements - build/DerivedData/Build/Products/Release/DevPad.app
 
 ## What NOT to do in Release tuning
 
-- Don't disable `ENABLE_APP_SANDBOX` to "make things work". Sandboxes are why DevPad doesn't need user trust for sensitive permissions.
+- Don't disable `ENABLE_APP_SANDBOX` to "make things work". Sandboxes are why DevPad doesn't need user trust for sensitive permissions. The one deliberate hole is the narrow Port Killer exception documented above.
 - Don't disable `STRIP_*` — symbol stripping is roughly 30% of the size win.
 - Don't enable `SWIFT_OPTIMIZATION_LEVEL = -Owholemodule` (a fictional value); the correct one is `-Osize` here.
 - Don't ship with `DEBUG_INFORMATION_FORMAT = dwarf` only — keep `dwarf-with-dsym` so crashes can be symbolicated later. The dSYM lives next to the binary in `DerivedData`, don't bundle it into the `.app`.

@@ -6,5 +6,17 @@
     <true/>
     <key>com.apple.security.device.camera</key>
     <true/>
+    <!--
+      Port Killer (PortScanner.swift) must list other processes' sockets and
+      send them signals, which the App Sandbox denies. This exception
+      re-allows exactly: enumerating PIDs, reading a process's info and file
+      descriptors, and signalling. Verified by running a sandboxed binary
+      signed with this exact rule (scan + kill both worked).
+      The value MUST stay ONE rule: only the first S-expression of this
+      string is applied, so a second `(allow …)` line is silently ignored.
+      An app carrying a sandbox exception cannot be submitted to the Mac App Store.
+    -->
+    <key>com.apple.security.temporary-exception.sbpl</key>
+    <string>(allow process-info-listpids process-info-pidinfo process-info-pidfdinfo signal)</string>
 </dict>
 </plist>

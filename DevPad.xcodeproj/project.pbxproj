@@ -44,9 +44,19 @@
 		B0000040000000000000000A /* HashGeneratorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000040000000000000000B /* HashGeneratorView.swift */; };
 		B0000041000000000000000A /* QRCamera.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000041000000000000000B /* QRCamera.swift */; };
 		B0000042000000000000000A /* ClipboardStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000042000000000000000B /* ClipboardStore.swift */; };
+		B0000043000000000000000A /* EncodeEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000043000000000000000B /* EncodeEngine.swift */; };
+		B0000044000000000000000A /* EncodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000044000000000000000B /* EncodeView.swift */; };
+		B0000045000000000000000A /* IDGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000045000000000000000B /* IDGenerator.swift */; };
+		B0000046000000000000000A /* UUIDGeneratorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000046000000000000000B /* UUIDGeneratorView.swift */; };
+		B0000047000000000000000A /* TimestampEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000047000000000000000B /* TimestampEngine.swift */; };
+		B0000048000000000000000A /* TimestampConverterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000048000000000000000B /* TimestampConverterView.swift */; };
+		B0000049000000000000000A /* PortScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000049000000000000000B /* PortScanner.swift */; };
+		B000004A000000000000000A /* PortKillerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B000004A000000000000000B /* PortKillerView.swift */; };
+		B000004B000000000000000A /* QRPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = B000004B000000000000000B /* QRPayload.swift */; };
 		B0000050000000000000000A /* DiffEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000050000000000000000B /* DiffEngineTests.swift */; };
 		B0000051000000000000000A /* ClipboardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000051000000000000000B /* ClipboardTests.swift */; };
 		B0000052000000000000000A /* EngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000052000000000000000B /* EngineTests.swift */; };
+		B000005B000000000000000A /* ToolEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B000005B000000000000000B /* ToolEngineTests.swift */; };
 		B0000060000000000000000A /* DiffEngine.swift in Sources (DevPadTests) */ = {isa = PBXBuildFile; fileRef = B000000A000000000000000B /* DiffEngine.swift */; };
 		B0000061000000000000000A /* ClipboardItem.swift in Sources (DevPadTests) */ = {isa = PBXBuildFile; fileRef = B000000C000000000000000B /* ClipboardItem.swift */; };
 		B0000062000000000000000A /* ClipboardStore.swift in Sources (DevPadTests) */ = {isa = PBXBuildFile; fileRef = B0000042000000000000000B /* ClipboardStore.swift */; };
@@ -56,6 +66,11 @@
 		B0000066000000000000000A /* Hashing.swift in Sources (DevPadTests) */ = {isa = PBXBuildFile; fileRef = B000003F000000000000000B /* Hashing.swift */; };
 		B0000067000000000000000A /* JWT.swift in Sources (DevPadTests) */ = {isa = PBXBuildFile; fileRef = B000003B000000000000000B /* JWT.swift */; };
 		B0000068000000000000000A /* RegexEngine.swift in Sources (DevPadTests) */ = {isa = PBXBuildFile; fileRef = B000003D000000000000000B /* RegexEngine.swift */; };
+		B0000069000000000000000A /* EncodeEngine.swift in Sources (DevPadTests) */ = {isa = PBXBuildFile; fileRef = B0000043000000000000000B /* EncodeEngine.swift */; };
+		B000006A000000000000000A /* IDGenerator.swift in Sources (DevPadTests) */ = {isa = PBXBuildFile; fileRef = B0000045000000000000000B /* IDGenerator.swift */; };
+		B000006B000000000000000A /* TimestampEngine.swift in Sources (DevPadTests) */ = {isa = PBXBuildFile; fileRef = B0000047000000000000000B /* TimestampEngine.swift */; };
+		B000006C000000000000000A /* PortScanner.swift in Sources (DevPadTests) */ = {isa = PBXBuildFile; fileRef = B0000049000000000000000B /* PortScanner.swift */; };
+		B000006D000000000000000A /* QRPayload.swift in Sources (DevPadTests) */ = {isa = PBXBuildFile; fileRef = B000004B000000000000000B /* QRPayload.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -98,9 +113,19 @@
 		B0000040000000000000000B /* HashGeneratorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HashGeneratorView.swift; sourceTree = "<group>"; };
 		B0000041000000000000000B /* QRCamera.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCamera.swift; sourceTree = "<group>"; };
 		B0000042000000000000000B /* ClipboardStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardStore.swift; sourceTree = "<group>"; };
+		B0000043000000000000000B /* EncodeEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncodeEngine.swift; sourceTree = "<group>"; };
+		B0000044000000000000000B /* EncodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncodeView.swift; sourceTree = "<group>"; };
+		B0000045000000000000000B /* IDGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IDGenerator.swift; sourceTree = "<group>"; };
+		B0000046000000000000000B /* UUIDGeneratorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UUIDGeneratorView.swift; sourceTree = "<group>"; };
+		B0000047000000000000000B /* TimestampEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimestampEngine.swift; sourceTree = "<group>"; };
+		B0000048000000000000000B /* TimestampConverterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimestampConverterView.swift; sourceTree = "<group>"; };
+		B0000049000000000000000B /* PortScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortScanner.swift; sourceTree = "<group>"; };
+		B000004A000000000000000B /* PortKillerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortKillerView.swift; sourceTree = "<group>"; };
+		B000004B000000000000000B /* QRPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRPayload.swift; sourceTree = "<group>"; };
 		B0000050000000000000000B /* DiffEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffEngineTests.swift; sourceTree = "<group>"; };
 		B0000051000000000000000B /* ClipboardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardTests.swift; sourceTree = "<group>"; };
 		B0000052000000000000000B /* EngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineTests.swift; sourceTree = "<group>"; };
+		B000005B000000000000000B /* ToolEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolEngineTests.swift; sourceTree = "<group>"; };
 		B0000053000000000000000B /* DevPadTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DevPadTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -174,6 +199,10 @@
 				B000003C000000000000000B /* JWTInspectorView.swift */,
 				B000003E000000000000000B /* RegexTesterView.swift */,
 				B0000040000000000000000B /* HashGeneratorView.swift */,
+				B0000044000000000000000B /* EncodeView.swift */,
+				B0000046000000000000000B /* UUIDGeneratorView.swift */,
+				B0000048000000000000000B /* TimestampConverterView.swift */,
+				B000004A000000000000000B /* PortKillerView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -196,6 +225,11 @@
 				B000003D000000000000000B /* RegexEngine.swift */,
 				B000003F000000000000000B /* Hashing.swift */,
 				B0000041000000000000000B /* QRCamera.swift */,
+				B0000043000000000000000B /* EncodeEngine.swift */,
+				B0000045000000000000000B /* IDGenerator.swift */,
+				B0000047000000000000000B /* TimestampEngine.swift */,
+				B0000049000000000000000B /* PortScanner.swift */,
+				B000004B000000000000000B /* QRPayload.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -223,6 +257,7 @@
 				B0000050000000000000000B /* DiffEngineTests.swift */,
 				B0000051000000000000000B /* ClipboardTests.swift */,
 				B0000052000000000000000B /* EngineTests.swift */,
+				B000005B000000000000000B /* ToolEngineTests.swift */,
 			);
 			path = DevPadTests;
 			sourceTree = "<group>";
@@ -352,6 +387,15 @@
 				B0000040000000000000000A /* HashGeneratorView.swift in Sources */,
 				B0000041000000000000000A /* QRCamera.swift in Sources */,
 				B0000042000000000000000A /* ClipboardStore.swift in Sources */,
+				B0000043000000000000000A /* EncodeEngine.swift in Sources */,
+				B0000044000000000000000A /* EncodeView.swift in Sources */,
+				B0000045000000000000000A /* IDGenerator.swift in Sources */,
+				B0000046000000000000000A /* UUIDGeneratorView.swift in Sources */,
+				B0000047000000000000000A /* TimestampEngine.swift in Sources */,
+				B0000048000000000000000A /* TimestampConverterView.swift in Sources */,
+				B0000049000000000000000A /* PortScanner.swift in Sources */,
+				B000004A000000000000000A /* PortKillerView.swift in Sources */,
+				B000004B000000000000000A /* QRPayload.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -362,6 +406,7 @@
 				B0000050000000000000000A /* DiffEngineTests.swift in Sources */,
 				B0000051000000000000000A /* ClipboardTests.swift in Sources */,
 				B0000052000000000000000A /* EngineTests.swift in Sources */,
+				B000005B000000000000000A /* ToolEngineTests.swift in Sources */,
 				B0000060000000000000000A /* DiffEngine.swift in Sources (DevPadTests) */,
 				B0000061000000000000000A /* ClipboardItem.swift in Sources (DevPadTests) */,
 				B0000062000000000000000A /* ClipboardStore.swift in Sources (DevPadTests) */,
@@ -371,6 +416,11 @@
 				B0000066000000000000000A /* Hashing.swift in Sources (DevPadTests) */,
 				B0000067000000000000000A /* JWT.swift in Sources (DevPadTests) */,
 				B0000068000000000000000A /* RegexEngine.swift in Sources (DevPadTests) */,
+				B0000069000000000000000A /* EncodeEngine.swift in Sources (DevPadTests) */,
+				B000006A000000000000000A /* IDGenerator.swift in Sources (DevPadTests) */,
+				B000006B000000000000000A /* TimestampEngine.swift in Sources (DevPadTests) */,
+				B000006C000000000000000A /* PortScanner.swift in Sources (DevPadTests) */,
+				B000006D000000000000000A /* QRPayload.swift in Sources (DevPadTests) */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

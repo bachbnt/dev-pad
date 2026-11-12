@@ -252,3 +252,29 @@ Reference: `configureSession()` in `QRCamera.swift`.
 **Cause**: `JSONSerialization.jsonObject` builds an unordered `[String: Any]` (Swift's per-process hash seed randomizes iteration order), keeps only the last of duplicate keys, and parses numbers into `NSNumber` / `Double`.
 
 **Fix**: A formatter must not use it. `JSONFormatter` has its own strict parser into an order-preserving tree that keeps number source text verbatim. Use `JSONSerialization` only where you need Foundation types and don't care about order (e.g. reading claims in `JWT.swift`). Tab indentation is done while writing, never by post-replacing spaces in the output, or spaces inside string values get rewritten too.
+
+## 19. The sandbox silently blocks process listing and signalling; only the first sbpl rule counts
+
+**Symptom**: A sandboxed app calling `proc_listpids` / `proc_pidinfo` on other processes gets `0` back with `errno == EPERM` and no entry in the system log; `kill(pid, 0)` on another process fails with `EPERM`. An "empty" result looks exactly like "nothing is listening".
+
+**Cause**: App Sandbox denies `process-info-*` for other processes and `signal` to anything but itself, and denies them without reporting. `com.apple.security.temporary-exception.sbpl` can re-allow them, but only the FIRST S-expression in the string is applied — a second `(allow …)` line is silently dropped. `(allow process-info* (target others))` also does not cover `proc_listpids`; that operation needs a rule without a `(target …)` filter.
+
+**Fix**: One combined rule in `DevPad.entitlements`: `(allow process-info-listpids process-info-pidinfo process-info-pidfdinfo signal)`. In code, never trust an empty scan: `PortScanner.listeningPorts()` throws `.accessDenied` when no process other than our own was readable. To re-verify after any change, compile the engine into a tiny CLI with an embedded Info.plist (`-Xlinker -sectcreate -Xlinker __TEXT -Xlinker __info_plist -Xlinker Info.plist`), `codesign -f -s - --entitlements <file>` it with the real entitlements, start a throwaway `python3 -m http.server`, and check that scan and kill both work. Unit tests can't do this: the test bundle isn't sandboxed.
+
+## 20. A bare `Color` (e.g. `Color.clear`) is greedy in both directions
+
+**Symptom**: A table header row (or any `HStack` row) is suddenly hundreds of points tall and pushes the content below it down or out of view.
+
+**Cause**: `Color.clear.frame(width: 70)` only fixes the width. A `Color` view accepts any height, so a stack row containing it grows to whatever the parent offers.
+
+**Fix**: Give spacer-like colors an explicit height as well (`Color.clear.frame(width: 70, height: 1)`), or use `Spacer().frame(width: 70)`. Reference: the header in `PortKillerView.swift`.
+
+**Checking layout without Screen Recording / Accessibility permission**: render the view offscreen instead of screenshotting it — compile all of `DevPad/` except `DevPadApp.swift` plus a small `main.swift` with `-D DEBUG`, host the view in an `NSHostingView` placed in an `NSWindow`, run the run loop for about a second, then `bitmapImageRepForCachingDisplay` + `cacheDisplay` and write the PNG. Launch it with `--demo-fill` for deterministic data, and render EN/VI, light/dark and a narrow width.
+
+## 21. `URL(string:)` accepts any `scheme:rest`, including `WIFI:…`
+
+**Symptom**: Decoding a Wi-Fi QR (`WIFI:T:WPA;S:Net;P:secret;;`) offered an "Open as link" button that does nothing useful.
+
+**Cause**: `URL(string:)` happily parses `WIFI:T:WPA;…` as a URL with scheme `wifi`, so `URL(string: payload)?.scheme != nil` is true for any `word:…` payload.
+
+**Fix**: Decide the payload kind first (`QRPayload.classify`) and only offer Open for plain text. A menu-style `Picker` inside a `Grid` cell also centres itself in a wide column: give it `.frame(maxWidth: .infinity, alignment: .leading)` so it lines up with the text fields below. Reference: `QRGeneratorView.swift`.
