@@ -4,12 +4,13 @@
 //  DevPad
 //
 //  Menu-bar popover hosted by `MenuBarExtra`. Lets the user switch
-//  between two tabs — Clipboard history and Drop Shelf — and exposes
-//  a shared footer (Open DevPad, Settings, Quit).
+//  between three tabs — Clipboard history, Drop Shelf and Port Killer —
+//  and exposes a shared footer (Open DevPad, Settings, Quit).
 //
-//  All three tabs (popup, main-window sidebar, this menubar tab)
-//  share the same underlying state via `DropShelfManager.shared` and
-//  `ClipboardManager.shared`, so changes propagate everywhere.
+//  Each tab shares its state with the matching main-window tool (and, for
+//  the shelf, the floating popup) via `ClipboardManager.shared`,
+//  `DropShelfManager.shared` and `PortKillerManager.shared`, so changes
+//  propagate everywhere.
 //
 
 import SwiftUI
@@ -18,6 +19,7 @@ import AppKit
 private enum MenuBarTab: String, CaseIterable, Identifiable {
     case clipboard
     case dropshelf
+    case ports
 
     var id: String { rawValue }
 
@@ -25,6 +27,7 @@ private enum MenuBarTab: String, CaseIterable, Identifiable {
         switch self {
         case .clipboard: return "menubar.tab.clipboard"
         case .dropshelf: return "menubar.tab.dropshelf"
+        case .ports:     return "menubar.tab.ports"
         }
     }
 
@@ -32,6 +35,7 @@ private enum MenuBarTab: String, CaseIterable, Identifiable {
         switch self {
         case .clipboard: return "doc.on.clipboard"
         case .dropshelf: return "tray.and.arrow.down"
+        case .ports:     return "network"
         }
     }
 }
@@ -55,11 +59,18 @@ struct MenuBarView: View {
                 ClipboardSection()
             case .dropshelf:
                 DropShelfSection()
+            case .ports:
+                PortsSection()
             }
             Divider()
             footer
         }
         .frame(width: 360, height: 520)
+        .onAppear {
+            if DemoMode.isOn, let raw = DemoMode.menuBarTab, let demoTab = MenuBarTab(rawValue: raw) {
+                tab = demoTab
+            }
+        }
     }
 
     // MARK: - Tab picker
@@ -447,6 +458,226 @@ private struct ShelfRow: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
+    }
+}
+
+// MARK: - Port Killer tab content
+
+private struct PortsSection: View {
+    @EnvironmentObject private var settings: AppSettings
+    @ObservedObject private var manager = PortKillerManager.shared
+    @State private var filter: String = ""
+
+    private var visiblePorts: [ListeningPort] {
+        let q = filter.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !q.isEmpty else { return manager.ports }
+        return manager.ports.filter {
+            String($0.port).contains(q)
+                || String($0.pid).contains(q)
+                || $0.processName.lowercased().contains(q)
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            header
+            Divider()
+            if let message = manager.errorMessage {
+                errorBar(message)
+                Divider()
+            }
+            content
+        }
+        // The popover's content stays alive between openings, so `onAppear`
+        // alone would show the ports from the first time. A window becoming
+        // key is what opening the popover looks like from here.
+        .onAppear { manager.refresh() }
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { _ in
+            manager.refresh()
+        }
+    }
+
+    private var header: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "network")
+                .foregroundStyle(.secondary)
+            Text(settings.t("sidebar.ports"))
+                .font(.headline)
+            if !manager.ports.isEmpty {
+                Text("\(manager.ports.count)")
+                    .foregroundStyle(.secondary)
+                    .font(.caption)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Capsule().fill(Color.secondary.opacity(0.15)))
+            }
+            Spacer()
+            if manager.isScanning {
+                ProgressView().controlSize(.small)
+            }
+            Button {
+                manager.refresh()
+            } label: {
+                Image(systemName: "arrow.clockwise")
+                    .font(.callout)
+            }
+            .buttonStyle(.borderless)
+            .foregroundStyle(.secondary)
+            .disabled(manager.isScanning)
+            .help(settings.t("ports.refresh"))
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+    }
+
+    private func errorBar(_ message: String) -> some View {
+        HStack(alignment: .top, spacing: 6) {
+            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.red)
+            Text("\(settings.t("ports.error.prefix")): \(message)")
+                .font(.caption)
+                .foregroundStyle(.red)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Color.red.opacity(0.10))
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if !manager.hasScanned {
+            ProgressView()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if manager.ports.isEmpty {
+            VStack(spacing: 8) {
+                Image(systemName: "network")
+                    .font(.system(size: 28))
+                    .foregroundStyle(.tertiary)
+                Text(settings.t("ports.empty.title"))
+                    .foregroundStyle(.secondary)
+                    .font(.callout)
+                Text(settings.t("ports.empty.shortHint"))
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            VStack(spacing: 0) {
+                filterField
+                Divider()
+                if visiblePorts.isEmpty {
+                    Text(settings.t("ports.noMatchFmt", filter))
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 0) {
+                            ForEach(visiblePorts) { item in
+                                PortRow(item: item)
+                                Divider().padding(.leading, 12)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private var filterField: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+                .font(.caption)
+            TextField(settings.t("ports.filter.placeholder"), text: $filter)
+                .textFieldStyle(.plain)
+                .font(.callout)
+            if !filter.isEmpty {
+                Button {
+                    filter = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.tertiary)
+                }
+                .buttonStyle(.plain)
+                .help(settings.t("common.clear"))
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
+    }
+}
+
+private struct PortRow: View {
+    @EnvironmentObject private var settings: AppSettings
+    @ObservedObject private var manager = PortKillerManager.shared
+    let item: ListeningPort
+
+    private var isSelf: Bool { item.pid == manager.ownPID }
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    Text(verbatim: String(item.port))
+                        .font(.system(.callout, design: .monospaced).weight(.semibold))
+                    Text(item.processName)
+                        .font(.callout)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    if isSelf {
+                        Text(settings.t("ports.thisApp"))
+                            .font(.caption2)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(Capsule().fill(Color.secondary.opacity(0.18)))
+                    }
+                }
+                HStack(spacing: 4) {
+                    Text(settings.t("ports.pidFmt", item.pid))
+                    Text("·")
+                    if item.isExposed {
+                        // A dev server reachable from the network is usually not what you meant to leave running.
+                        Label(settings.t("ports.scope.all"), systemImage: "network")
+                            .foregroundStyle(Color.orange)
+                    } else {
+                        Text(item.addresses.joined(separator: ", "))
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                    }
+                }
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+            }
+            Spacer(minLength: 4)
+            Button(role: .destructive) {
+                manager.terminate(item, force: false)
+            } label: {
+                Text(settings.t("ports.kill"))
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .disabled(isSelf)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
+        .contextMenu {
+            Button(settings.t("ports.kill")) { manager.terminate(item, force: false) }
+                .disabled(isSelf)
+            Button(settings.t("ports.forceKill")) { manager.terminate(item, force: true) }
+                .disabled(isSelf)
+            Divider()
+            Button(settings.t("ports.copyPort")) { copy(String(item.port)) }
+            Button(settings.t("ports.copyPID")) { copy(String(item.pid)) }
+        }
+    }
+
+    private func copy(_ s: String) {
+        let pb = NSPasteboard.general
+        pb.clearContents()
+        pb.setString(s, forType: .string)
     }
 }
 

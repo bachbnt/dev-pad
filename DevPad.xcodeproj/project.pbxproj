@@ -53,6 +53,7 @@
 		B0000049000000000000000A /* PortScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000049000000000000000B /* PortScanner.swift */; };
 		B000004A000000000000000A /* PortKillerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B000004A000000000000000B /* PortKillerView.swift */; };
 		B000004B000000000000000A /* QRPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = B000004B000000000000000B /* QRPayload.swift */; };
+		B000004C000000000000000A /* PortKillerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B000004C000000000000000B /* PortKillerManager.swift */; };
 		B0000050000000000000000A /* DiffEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000050000000000000000B /* DiffEngineTests.swift */; };
 		B0000051000000000000000A /* ClipboardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000051000000000000000B /* ClipboardTests.swift */; };
 		B0000052000000000000000A /* EngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0000052000000000000000B /* EngineTests.swift */; };
@@ -122,6 +123,7 @@
 		B0000049000000000000000B /* PortScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortScanner.swift; sourceTree = "<group>"; };
 		B000004A000000000000000B /* PortKillerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortKillerView.swift; sourceTree = "<group>"; };
 		B000004B000000000000000B /* QRPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRPayload.swift; sourceTree = "<group>"; };
+		B000004C000000000000000B /* PortKillerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortKillerManager.swift; sourceTree = "<group>"; };
 		B0000050000000000000000B /* DiffEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffEngineTests.swift; sourceTree = "<group>"; };
 		B0000051000000000000000B /* ClipboardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardTests.swift; sourceTree = "<group>"; };
 		B0000052000000000000000B /* EngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineTests.swift; sourceTree = "<group>"; };
@@ -230,6 +232,7 @@
 				B0000047000000000000000B /* TimestampEngine.swift */,
 				B0000049000000000000000B /* PortScanner.swift */,
 				B000004B000000000000000B /* QRPayload.swift */,
+				B000004C000000000000000B /* PortKillerManager.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -396,6 +399,7 @@
 				B0000049000000000000000A /* PortScanner.swift in Sources */,
 				B000004A000000000000000A /* PortKillerView.swift in Sources */,
 				B000004B000000000000000A /* QRPayload.swift in Sources */,
+				B000004C000000000000000A /* PortKillerManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

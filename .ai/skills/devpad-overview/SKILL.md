@@ -31,6 +31,7 @@ DevPad/
 │   │   ├── IDGenerator.swift         (UUID v4/v7 + ULID from explicit bytes)
 │   │   ├── TimestampEngine.swift     (Unix epoch ↔ date)
 │   │   ├── PortScanner.swift         (libproc listening-port scan + signalling)
+│   │   ├── PortKillerManager.swift   (shared Port Killer scan state)
 │   │   ├── ClipboardManager.swift    (Timer + changeCount + Pure Paste)
 │   │   ├── ClipboardStore.swift      (history on disk: JSON in UserDefaults + image files)
 │   │   ├── DropShelfManager.swift, DropShelfMonitor.swift
@@ -57,7 +58,7 @@ DevPad/
 ## Three scenes (`DevPadApp.swift`)
 
 - `Window("DevPad")` — main window, renders `MainWindowView`. Width 1100, height 720.
-- `MenuBarExtra(…)` — clipboard icon in macOS menu bar, opens a tabbed popover with Clipboard + Drop Shelf tabs.
+- `MenuBarExtra(…)` — clipboard icon in macOS menu bar, opens a tabbed popover with Clipboard + Drop Shelf + Ports tabs.
 - `Settings` — separate scene reachable via `⌘,`.
 
 `AppDelegate` flips `NSApp.setActivationPolicy(.regular ↔ .accessory)` when the window opens/closes so closing the window hides the dock icon but keeps the app alive in the menu bar (Maccy/Bartender-style).
@@ -72,6 +73,7 @@ All accessed via `.shared`, live for the duration of the app, observed via `@Env
 | `ClipboardManager.shared` | clipboard history (persisted via `ClipboardStore`; ordering/dedup/privacy rules in `ClipboardHistory`), adaptive polling Timer, Pure Paste rewrite | ClipboardHistoryView, ClipboardMenuBarView, DemoMode |
 | `DropShelfManager.shared` | shared URL list across popup / sidebar tab / menubar tab | DropShelfPanelView, DropShelfView, ClipboardMenuBarView, DropShelfMonitor |
 | `DropShelfMonitor.shared` | global mouse + drag-pasteboard observer, NSPanel lifecycle | enabled/disabled from AppSettings.dropShelfEnabled |
+| `PortKillerManager.shared` | last port scan, scanning flag, last error; scan + kill off the main thread | PortKillerView, the menu-bar Ports tab |
 
 `AppSettings.shared.t("key")` is the *only* way text reaches the UI. There is no other localization channel.
 

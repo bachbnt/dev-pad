@@ -164,6 +164,17 @@ enum DemoMode {
 #endif
     }
 
+    /// With `--demo-menubar=clipboard|dropshelf|ports` the menu-bar popover
+    /// opens on that tab (for screenshots and layout checks).
+    static var menuBarTab: String? {
+#if DEBUG
+        if let arg = ProcessInfo.processInfo.arguments.first(where: { $0.hasPrefix("--demo-menubar=") }) {
+            return String(arg.dropFirst("--demo-menubar=".count))
+        }
+#endif
+        return nil
+    }
+
     // Fake data for the QR demos — never a real account, network or person.
     static let sampleVietQRBIN = "970436"
     static let sampleVietQRAccount = "0123456789"

@@ -5,10 +5,11 @@
 //
 //  Lists every process that is listening on a TCP port and lets you stop it
 //  with one click (SIGTERM; SIGKILL from the context menu). Scanning is done
-//  by `PortScanner` off the main thread, on first show, whenever the tab
-//  becomes active again, and on demand (`⌘↵`). The view never kills the
-//  DevPad process itself or PID ≤ 1. In demo mode it shows made-up rows so
-//  screenshots don't leak the maintainer's real processes.
+//  through `PortKillerManager` (shared with the menu-bar popover), on first
+//  show, whenever the tab becomes active again, and on demand (`⌘↵`). The
+//  view never kills the DevPad process itself or PID ≤ 1. In demo mode it
+//  shows made-up rows so screenshots don't leak the maintainer's real
+//  processes.
 //
 
 import SwiftUI
@@ -18,13 +19,14 @@ struct PortKillerView: View {
     @EnvironmentObject private var settings: AppSettings
     @Environment(\.isToolActive) private var isToolActive
 
-    @State private var ports: [ListeningPort] = []
+    @ObservedObject private var manager = PortKillerManager.shared
     @State private var filter: String = ""
-    @State private var isScanning = false
-    @State private var hasScanned = false
-    @State private var errorMessage: String?
 
-    private let ownPID = getpid()
+    private var ports: [ListeningPort] { manager.ports }
+    private var isScanning: Bool { manager.isScanning }
+    private var hasScanned: Bool { manager.hasScanned }
+    private var errorMessage: String? { manager.errorMessage }
+    private var ownPID: Int32 { manager.ownPID }
 
     private var visiblePorts: [ListeningPort] {
         let q = filter.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
@@ -45,11 +47,11 @@ struct PortKillerView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .onAppear { refresh() }
+        .onAppear { manager.refresh() }
         // Tabs stay mounted, so `onAppear` only fires once per session; the
         // listening ports change while the user is elsewhere.
         .onChange(of: isToolActive) { active in
-            if active { refresh() }
+            if active { manager.refresh() }
         }
     }
 
@@ -176,7 +178,7 @@ struct PortKillerView: View {
             scopeLabel(item)
                 .frame(width: 170, alignment: .leading)
             Button(role: .destructive) {
-                kill(item, force: false)
+                manager.terminate(item, force: false)
             } label: {
                 Text(settings.t("ports.kill"))
                     .frame(minWidth: 40)
@@ -188,9 +190,9 @@ struct PortKillerView: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 7)
         .contextMenu {
-            Button(settings.t("ports.kill")) { kill(item, force: false) }
+            Button(settings.t("ports.kill")) { manager.terminate(item, force: false) }
                 .disabled(isSelf)
-            Button(settings.t("ports.forceKill")) { kill(item, force: true) }
+            Button(settings.t("ports.forceKill")) { manager.terminate(item, force: true) }
                 .disabled(isSelf)
             Divider()
             Button(settings.t("ports.copyPort")) { copy(String(item.port)) }
@@ -256,7 +258,7 @@ struct PortKillerView: View {
             }
             Spacer()
             Button {
-                refresh()
+                manager.refresh()
             } label: {
                 Label(settings.t("ports.refresh"), systemImage: "arrow.clockwise")
                     .frame(minWidth: 120)
@@ -283,58 +285,6 @@ struct PortKillerView: View {
     }
 
     // MARK: - Actions
-
-    private func refresh() {
-        if DemoMode.isOn {
-            if !hasScanned {
-                ports = DemoMode.samplePorts
-                hasScanned = true
-            }
-            return
-        }
-        guard !isScanning else { return }
-        isScanning = true
-        Task.detached {
-            var found: [ListeningPort] = []
-            var failure: String?
-            do {
-                found = try PortScanner.listeningPorts()
-            } catch {
-                failure = error.localizedDescription
-            }
-            // Freeze before crossing the actor boundary (Swift 6 strictness).
-            let finalPorts = found
-            let finalFailure = failure
-            await MainActor.run {
-                if finalFailure == nil { self.ports = finalPorts }
-                self.errorMessage = finalFailure
-                self.hasScanned = true
-                self.isScanning = false
-            }
-        }
-    }
-
-    private func kill(_ item: ListeningPort, force: Bool) {
-        guard item.pid != ownPID else { return }
-        if DemoMode.isOn {
-            ports.removeAll { $0.pid == item.pid }
-            return
-        }
-        do {
-            try PortScanner.terminate(pid: item.pid, force: force)
-        } catch {
-            // No auto-refresh here: a scan would clear this message a
-            // moment after the user could read it.
-            errorMessage = error.localizedDescription
-            return
-        }
-        errorMessage = nil
-        // SIGTERM is a request: give the process a moment to exit before
-        // looking again, or the row would linger and look like a failed kill.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            refresh()
-        }
-    }
 
     private func copy(_ s: String) {
         let pb = NSPasteboard.general

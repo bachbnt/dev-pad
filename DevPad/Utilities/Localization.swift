@@ -427,6 +427,9 @@ enum Localization {
         // Menu-bar tab labels
         "menubar.tab.clipboard":             "Clipboard",
         "menubar.tab.dropshelf":             "Drop Shelf",
+        "menubar.tab.ports":                 "Ports",
+        "ports.pidFmt":                      "PID %d",
+        "ports.empty.shortHint":             "No process is listening on a TCP port right now.",
 
         // Settings
         "settings.title":                    "Settings",
@@ -837,6 +840,9 @@ enum Localization {
         "dropshelf.remove":                  "Xóa khỏi khay",
         "menubar.tab.clipboard":             "Clipboard",
         "menubar.tab.dropshelf":             "Khay thả file",
+        "menubar.tab.ports":                 "Cổng",
+        "ports.pidFmt":                      "PID %d",
+        "ports.empty.shortHint":             "Hiện không có tiến trình nào lắng nghe cổng TCP.",
 
         "settings.title":                    "Cài đặt",
         "settings.section.appearance":       "Giao diện",

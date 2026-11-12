@@ -183,6 +183,7 @@ After first launch, a clipboard icon appears in the macOS menu bar (top-right). 
 
 - **Clipboard** tab — the 20 most recent items, pinned ones grouped on top. Click an item to copy it back to the pasteboard.
 - **Drop Shelf** tab — the same files that the floating shelf and the main-window tab show. Includes a "Drag out all" handle at the top plus per-file drag, so even if the floating popup is dismissed you can still drag files out from here.
+- **Ports** tab — the Port Killer list in the popover: every process listening on a TCP port with its PID and whether it is reachable from the network, a filter field, and a **Kill** button per row (right-click for force kill and copy). It refreshes each time you open the popover, and shares its state with the Port Killer tool in the main window.
 - Shared footer: **Open DevPad**, **Settings (⌘,)**, **Quit**.
 
 ### Main window
@@ -356,6 +357,7 @@ DevPad/
 │   │   ├── IDGenerator.swift        # UUID v4 / v7 + ULID from explicit bytes
 │   │   ├── TimestampEngine.swift    # Unix epoch ↔ date parsing + formatting
 │   │   ├── PortScanner.swift        # libproc listening-port scan + signalling
+│   │   ├── PortKillerManager.swift  # Shared scan state for the Port Killer tool and menu-bar tab
 │   │   ├── DiffEngine.swift         # Myers line/word diff + hunk grouping
 │   │   ├── ClipboardManager.swift   # NSPasteboard polling + Pure Paste
 │   │   ├── ClipboardStore.swift     # History on disk: JSON in UserDefaults + image files
@@ -378,7 +380,7 @@ DevPad/
 │   │   ├── PortKillerView.swift         # Listening TCP ports with one-click kill
 │   │   ├── DiffCompareView.swift
 │   │   ├── ClipboardHistoryView.swift   # Full window detail view (Pure Paste toggle)
-│   │   ├── ClipboardMenuBarView.swift   # Tabbed menu-bar popover (Clipboard + Drop Shelf)
+│   │   ├── ClipboardMenuBarView.swift   # Tabbed menu-bar popover (Clipboard + Drop Shelf + Ports)
 │   │   ├── DropShelfView.swift          # Drop Shelf sidebar tab
 │   │   ├── DropShelfPanelView.swift     # Floating popup content
 │   │   ├── MultiFileDragSource.swift    # AppKit drag-source bridge (multi-file)
